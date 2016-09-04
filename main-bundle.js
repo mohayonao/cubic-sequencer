@@ -64296,147 +64296,176 @@ module.exports = require("./lib");
 (function (global){
 "use strict";
 
-const events = require("events");
-const defaults = require("./utils/defaults");
-const defaultContext = require("./defaultContext");
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-class WebAudioScheduler extends events.EventEmitter {
-  constructor(opts) {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var events = require("events");
+var defaults = require("./utils/defaults");
+var defaultContext = require("./defaultContext");
+
+var WebAudioScheduler = function (_events$EventEmitter) {
+  _inherits(WebAudioScheduler, _events$EventEmitter);
+
+  function WebAudioScheduler(opts) {
+    _classCallCheck(this, WebAudioScheduler);
+
     opts = opts || /* istanbul ignore next */{};
 
-    super();
+    var _this = _possibleConstructorReturn(this, (WebAudioScheduler.__proto__ || Object.getPrototypeOf(WebAudioScheduler)).call(this));
 
-    this.context = defaults(opts.context, defaultContext);
-    this.interval = defaults(opts.interval, 0.025);
-    this.aheadTime = defaults(opts.aheadTime, 0.1);
-    this.timerAPI = defaults(opts.timerAPI, global);
-    this.playbackTime = this.currentTime;
+    _this.context = defaults(opts.context, defaultContext);
+    _this.interval = defaults(opts.interval, 0.025);
+    _this.aheadTime = defaults(opts.aheadTime, 0.1);
+    _this.timerAPI = defaults(opts.timerAPI, global);
+    _this.playbackTime = _this.currentTime;
 
-    this._timerId = 0;
-    this._schedId = 0;
-    this._scheds = [];
+    _this._timerId = 0;
+    _this._schedId = 0;
+    _this._scheds = [];
+    return _this;
   }
 
-  get state() {
-    return this._timerId !== 0 ? "running" : "suspended";
-  }
+  _createClass(WebAudioScheduler, [{
+    key: "start",
+    value: function start(callback, args) {
+      var _this2 = this;
 
-  get currentTime() {
-    return this.context.currentTime;
-  }
+      var loop = function loop() {
+        var t0 = _this2.context.currentTime;
+        var t1 = t0 + _this2.aheadTime;
 
-  get events() {
-    return this._scheds.slice();
-  }
+        _this2._process(t0, t1);
+      };
 
-  start(callback, args) {
-    const loop = () => {
-      const t0 = this.context.currentTime;
-      const t1 = t0 + this.aheadTime;
+      if (this._timerId === 0) {
+        this._timerId = this.timerAPI.setInterval(loop, this.interval * 1000);
 
-      this._process(t0, t1);
-    };
+        this.emit("start");
 
-    if (this._timerId === 0) {
-      this._timerId = this.timerAPI.setInterval(loop, this.interval * 1000);
-
-      this.emit("start");
-
-      if (callback) {
+        if (callback) {
+          this.insert(this.context.currentTime, callback, args);
+          loop();
+        }
+      } else if (callback) {
         this.insert(this.context.currentTime, callback, args);
-        loop();
       }
-    } else if (callback) {
-      this.insert(this.context.currentTime, callback, args);
+
+      return this;
     }
+  }, {
+    key: "stop",
+    value: function stop(reset) {
+      if (this._timerId !== 0) {
+        this.timerAPI.clearInterval(this._timerId);
+        this._timerId = 0;
 
-    return this;
-  }
+        this.emit("stop");
+      }
 
-  stop(reset) {
-    if (this._timerId !== 0) {
-      this.timerAPI.clearInterval(this._timerId);
-      this._timerId = 0;
+      if (reset) {
+        this._scheds.splice(0);
+      }
 
-      this.emit("stop");
+      return this;
     }
+  }, {
+    key: "insert",
+    value: function insert(time, callback, args) {
+      var id = ++this._schedId;
+      var event = { id: id, time: time, callback: callback, args: args };
+      var scheds = this._scheds;
 
-    if (reset) {
+      if (scheds.length === 0 || scheds[scheds.length - 1].time <= time) {
+        scheds.push(event);
+      } else {
+        for (var i = 0, imax = scheds.length; i < imax; i++) {
+          if (time < scheds[i].time) {
+            scheds.splice(i, 0, event);
+            break;
+          }
+        }
+      }
+
+      return id;
+    }
+  }, {
+    key: "nextTick",
+    value: function nextTick(time, callback, args) {
+      if (typeof time === "function") {
+        args = callback;
+        callback = time;
+        time = this.playbackTime;
+      }
+
+      return this.insert(time + this.aheadTime, callback, args);
+    }
+  }, {
+    key: "remove",
+    value: function remove(schedId) {
+      var scheds = this._scheds;
+
+      if (typeof schedId === "number") {
+        for (var i = 0, imax = scheds.length; i < imax; i++) {
+          if (schedId === scheds[i].id) {
+            scheds.splice(i, 1);
+            break;
+          }
+        }
+      }
+
+      return schedId;
+    }
+  }, {
+    key: "removeAll",
+    value: function removeAll() {
       this._scheds.splice(0);
     }
-
-    return this;
-  }
-
-  insert(time, callback, args) {
-    const id = ++this._schedId;
-    const event = { id, time, callback, args };
-    const scheds = this._scheds;
-
-    if (scheds.length === 0 || scheds[scheds.length - 1].time <= time) {
-      scheds.push(event);
-    } else {
-      for (let i = 0, imax = scheds.length; i < imax; i++) {
-        if (time < scheds[i].time) {
-          scheds.splice(i, 0, event);
-          break;
-        }
-      }
-    }
-
-    return id;
-  }
-
-  nextTick(time, callback, args) {
-    if (typeof time === "function") {
-      args = callback;
-      callback = time;
-      time = this.playbackTime;
-    }
-
-    return this.insert(time + this.aheadTime, callback, args);
-  }
-
-  remove(schedId) {
-    const scheds = this._scheds;
-
-    if (typeof schedId === "number") {
-      for (let i = 0, imax = scheds.length; i < imax; i++) {
-        if (schedId === scheds[i].id) {
-          scheds.splice(i, 1);
-          break;
-        }
-      }
-    }
-
-    return schedId;
-  }
-
-  removeAll() {
-    this._scheds.splice(0);
-  }
-
-  _process(t0, t1) {
-    const scheds = this._scheds;
-    const playbackTime = t0;
-
-    this.playbackTime = playbackTime;
-    this.emit("process", { playbackTime });
-
-    while (scheds.length && scheds[0].time < t1) {
-      const event = scheds.shift();
-      const playbackTime = event.time;
-      const args = event.args;
+  }, {
+    key: "_process",
+    value: function _process(t0, t1) {
+      var scheds = this._scheds;
+      var playbackTime = t0;
 
       this.playbackTime = playbackTime;
+      this.emit("process", { playbackTime: playbackTime });
 
-      event.callback({ playbackTime, args });
+      while (scheds.length && scheds[0].time < t1) {
+        var event = scheds.shift();
+        var _playbackTime = event.time;
+        var args = event.args;
+
+        this.playbackTime = _playbackTime;
+
+        event.callback({ playbackTime: _playbackTime, args: args });
+      }
+
+      this.playbackTime = playbackTime;
+      this.emit("processed", { playbackTime: playbackTime });
     }
+  }, {
+    key: "state",
+    get: function get() {
+      return this._timerId !== 0 ? "running" : "suspended";
+    }
+  }, {
+    key: "currentTime",
+    get: function get() {
+      return this.context.currentTime;
+    }
+  }, {
+    key: "events",
+    get: function get() {
+      return this._scheds.slice();
+    }
+  }]);
 
-    this.playbackTime = playbackTime;
-    this.emit("processed", { playbackTime });
-  }
-}
+  return WebAudioScheduler;
+}(events.EventEmitter);
 
 module.exports = WebAudioScheduler;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -64449,6 +64478,8 @@ module.exports = {
   }
 };
 },{}],201:[function(require,module,exports){
+"use strict";
+
 module.exports = require("./WebAudioScheduler");
 },{"./WebAudioScheduler":199}],202:[function(require,module,exports){
 "use strict";
@@ -64822,7 +64853,7 @@ function to3DIndex(track, scene, row, col) {
 
 module.exports = CubeSeqCtrl;
 
-},{"../actions/changeBPM":204,"../actions/changeTrack":205,"../actions/clear":206,"../actions/random":207,"../actions/toggleMatrix":208,"../actions/togglePlay":209,"../actions/updateState":210,"../consts":213,"../utils/pluck2D":234,"./MatrixCtrl":212,"nmap":34,"react":187,"react-redux":40}],212:[function(require,module,exports){
+},{"../actions/changeBPM":204,"../actions/changeTrack":205,"../actions/clear":206,"../actions/random":207,"../actions/toggleMatrix":208,"../actions/togglePlay":209,"../actions/updateState":210,"../consts":213,"../utils/pluck2D":235,"./MatrixCtrl":212,"nmap":34,"react":187,"react-redux":40}],212:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65006,7 +65037,7 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./components/CubeSeqCtrl":211,"./reducers":215,"./sequencer/Sequencer":223,"./viewer/Viewer":236,"react":187,"react-dom":37,"react-redux":40,"redux":193}],215:[function(require,module,exports){
+},{"./components/CubeSeqCtrl":211,"./reducers":215,"./sequencer/Sequencer":223,"./viewer/Viewer":237,"react":187,"react-dom":37,"react-redux":40,"redux":193}],215:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65038,7 +65069,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../../utils/irand":232}],217:[function(require,module,exports){
+},{"../../utils/irand":233}],217:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65103,7 +65134,7 @@ module.exports = redux.combineReducers(nmap(N, function (_, i) {
   }));
 }));
 
-},{"../consts":213,"../utils/coin":230,"nmap":34,"redux":193}],220:[function(require,module,exports){
+},{"../consts":213,"../utils/coin":231,"nmap":34,"redux":193}],220:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65133,7 +65164,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../../utils/irand":232}],222:[function(require,module,exports){
+},{"../../utils/irand":233}],222:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65174,7 +65205,7 @@ module.exports = redux.combineReducers([0, 1, 2].map(function (track) {
   };
 }));
 
-},{"../../consts":213,"../../utils/irand":232,"../../utils/sample":235,"redux":193}],223:[function(require,module,exports){
+},{"../../consts":213,"../../utils/irand":233,"../../utils/sample":236,"redux":193}],223:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65194,6 +65225,7 @@ var WorkerTimer = require("worker-timer");
 var Track = require("./Track");
 var sounds = require("./sounds");
 var createReverbBuffer = require("./createReverbBuffer");
+var startWebAudioAPI = require("./startWebAudioAPI");
 var pluck2D = require("../utils/pluck2D");
 var computeDurationFromBPM = require("../utils/computeDurationFromBPM");
 
@@ -65255,6 +65287,7 @@ var Sequencer = function (_events$EventEmitter) {
     value: function play() {
       var value = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
 
+      startWebAudioAPI(this.audioContext);
       if (this.sched.state === "suspended" && value === 1) {
         this.sched.start(this.sequence);
       }
@@ -65289,7 +65322,7 @@ function rotate(matrix) {
 
 module.exports = Sequencer;
 
-},{"../consts":213,"../utils/computeDurationFromBPM":231,"../utils/pluck2D":234,"./Track":224,"./createReverbBuffer":225,"./sounds":228,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],224:[function(require,module,exports){
+},{"../consts":213,"../utils/computeDurationFromBPM":232,"../utils/pluck2D":235,"./Track":224,"./createReverbBuffer":225,"./sounds":228,"./startWebAudioAPI":230,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],224:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65385,7 +65418,7 @@ var Track = function (_events$EventEmitter) {
 
 module.exports = Track;
 
-},{"../consts":213,"../utils/computeDurationFromBPM":231,"events":1,"nmap":34}],225:[function(require,module,exports){
+},{"../consts":213,"../utils/computeDurationFromBPM":232,"events":1,"nmap":34}],225:[function(require,module,exports){
 "use strict";
 
 function createReverb(len) {
@@ -65440,7 +65473,7 @@ function beep(destination, playbackTime, noteNumber, duration) {
 
 module.exports = beep;
 
-},{"../../utils/mtof":233}],227:[function(require,module,exports){
+},{"../../utils/mtof":234}],227:[function(require,module,exports){
 "use strict";
 
 var mtof = require("../../utils/mtof");
@@ -65496,7 +65529,7 @@ function epiano(destination, playbackTime, noteNumber, duration) {
 
 module.exports = epiano;
 
-},{"../../utils/mtof":233}],228:[function(require,module,exports){
+},{"../../utils/mtof":234}],228:[function(require,module,exports){
 "use strict";
 
 module.exports = [require("./epiano"), require("./pad"), require("./beep")];
@@ -65546,7 +65579,28 @@ function pad(destination, playbackTime, noteNumber, duration) {
 
 module.exports = pad;
 
-},{"../../utils/mtof":233}],230:[function(require,module,exports){
+},{"../../utils/mtof":234}],230:[function(require,module,exports){
+"use strict";
+
+function startWebAudioAPI(audioContext) {
+  if (audioContext.currentTime !== 0) {
+    return;
+  }
+
+  var bufferSource = audioContext.createBufferSource();
+
+  bufferSource.buffer = audioContext.createBuffer(1, 8, audioContext.sampleRate);
+  bufferSource.start(audioContext.currentTime);
+  bufferSource.stop(audioContext.currentTime + bufferSource.buffer.duration);
+  bufferSource.connect(audioContext.destination);
+  bufferSource.onended = function () {
+    bufferSource.disconnect();
+  };
+}
+
+module.exports = startWebAudioAPI;
+
+},{}],231:[function(require,module,exports){
 "use strict";
 
 function coin(x) {
@@ -65555,7 +65609,7 @@ function coin(x) {
 
 module.exports = coin;
 
-},{}],231:[function(require,module,exports){
+},{}],232:[function(require,module,exports){
 "use strict";
 
 function computeDurationFromBPM(bpm) {
@@ -65566,7 +65620,7 @@ function computeDurationFromBPM(bpm) {
 
 module.exports = computeDurationFromBPM;
 
-},{}],232:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 "use strict";
 
 function irand(x) {
@@ -65575,7 +65629,7 @@ function irand(x) {
 
 module.exports = irand;
 
-},{}],233:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 
 function mtof(m) {
@@ -65584,7 +65638,7 @@ function mtof(m) {
 
 module.exports = mtof;
 
-},{}],234:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65619,7 +65673,7 @@ function pluck2D(matrix, axis, $) {
 
 module.exports = pluck2D;
 
-},{"../consts":213,"nmap":34}],235:[function(require,module,exports){
+},{"../consts":213,"nmap":34}],236:[function(require,module,exports){
 "use strict";
 
 function sample(list) {
@@ -65628,7 +65682,7 @@ function sample(list) {
 
 module.exports = sample;
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();

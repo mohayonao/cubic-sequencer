@@ -7,6 +7,7 @@ const WorkerTimer = require("worker-timer");
 const Track = require("./Track");
 const sounds = require("./sounds");
 const createReverbBuffer = require("./createReverbBuffer");
+const startWebAudioAPI = require("./startWebAudioAPI");
 const pluck2D = require("../utils/pluck2D");
 const computeDurationFromBPM = require("../utils/computeDurationFromBPM");
 
@@ -51,6 +52,7 @@ class Sequencer extends events.EventEmitter {
   }
 
   play(value = 1) {
+    startWebAudioAPI(this.audioContext);
     if (this.sched.state === "suspended" && value === 1) {
       this.sched.start(this.sequence);
     }

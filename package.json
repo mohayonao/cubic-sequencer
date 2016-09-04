@@ -13,7 +13,7 @@
     "react-redux": "^4.4.5",
     "redux": "^3.5.2",
     "three": "^0.80.1",
-    "web-audio-scheduler": "^1.2.0",
+    "web-audio-scheduler": "^1.2.1",
     "worker-timer": "^1.1.0"
   },
   "devDependencies": {
