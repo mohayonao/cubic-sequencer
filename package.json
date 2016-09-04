@@ -1,0 +1,49 @@
+{
+  "name": "@mohayonao/cubic-sequencer",
+  "description": "cubic sequencer",
+  "version": "0.0.0",
+  "author": "Nao Yonamine <mohayonao@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/mohayonao/cubic-sequencer/issues"
+  },
+  "dependencies": {
+    "nmap": "^0.9.0",
+    "react": "^15.3.1",
+    "react-dom": "^15.3.1",
+    "react-redux": "^4.4.5",
+    "redux": "^3.5.2",
+    "three": "^0.80.1",
+    "web-audio-scheduler": "^1.2.0",
+    "worker-timer": "^1.1.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-preset-power-assert": "^1.0.0",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.0",
+    "eslint": "^3.4.0",
+    "eslint-plugin-react": "^6.2.0",
+    "lodash.clonedeep": "^4.3.2",
+    "mocha": "^3.0.2",
+    "npm-run-all": "^3.0.0",
+    "power-assert": "^1.4.1",
+    "run-with-mocha": "^0.2.0",
+    "watchify": "^3.7.0"
+  },
+  "homepage": "http://mohayonao.github.io/cubic-sequencer/",
+  "license": "MIT",
+  "main": "main-bundle.js",
+  "private": true,
+  "scripts": {
+    "build": "npm-run-all build:*",
+    "build:to5": "browserify src/main.js -o main-bundle.js -t [ babelify ]",
+    "lint": "eslint src",
+    "test": "mocha",
+    "watch": "npm-run-all -p watch:*",
+    "watch:to5": "watchify src/main.js -o main-bundle.js --verbose -t [ babelify ]"
+  }
+}
