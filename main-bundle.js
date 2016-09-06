@@ -64687,7 +64687,7 @@ module.exports = {
     return { type: types.RANDOM };
   },
   tickSequencer: function tickSequencer(playbackTime, track, index) {
-    return { type: types.TICK_SEQUENCER, track: track, index: index };
+    return { type: types.TICK_SEQUENCER, playbackTime: playbackTime, track: track, index: index };
   },
   toggleMatrix: function toggleMatrix(i, j, k) {
     return { type: types.TOGGLE_MATRIX, i: i, j: j, k: k };
@@ -64722,18 +64722,13 @@ var sounds = require("./sounds");
 var createReverbBuffer = require("./utils/createReverbBuffer");
 var startWebAudioAPI = require("./utils/startWebAudioAPI");
 
-var _require = require("../utils/matrix");
+var _require = require("./utils");
 
-var pluck2D = _require.pluck2D;
-var rotate = _require.rotate;
+var computeDurationFromBPM = _require.computeDurationFromBPM;
 
-var _require2 = require("./utils");
+var _require2 = require("../constants");
 
-var computeDurationFromBPM = _require2.computeDurationFromBPM;
-
-var _require3 = require("../constants");
-
-var BPM_MAP = _require3.BPM_MAP;
+var BPM_MAP = _require2.BPM_MAP;
 
 var Sequencer = function (_events$EventEmitter) {
   _inherits(Sequencer, _events$EventEmitter);
@@ -64773,10 +64768,10 @@ var Sequencer = function (_events$EventEmitter) {
       this.bpm = BPM_MAP[state.master.bpm];
 
       this.tracks.forEach(function (track, i) {
-        var _state = state.track[i];
-        var matrix = rotate(pluck2D(state.matrix, i, _state.scene));
+        var trackState = state.track[i];
+        var matrix = state.matrix.axis[i][trackState.scene];
 
-        track.setState(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
+        track.setState(_extends({}, trackState, { matrix: matrix, bpm: _this2.bpm }));
       });
 
       this.play(state.master.play);
@@ -64813,7 +64808,7 @@ var Sequencer = function (_events$EventEmitter) {
 
 module.exports = Sequencer;
 
-},{"../constants":221,"../utils/matrix":231,"./Track":208,"./sounds":211,"./utils":214,"./utils/createReverbBuffer":213,"./utils/startWebAudioAPI":215,"events":1,"nmap":34,"web-audio-scheduler":199,"worker-timer":205}],208:[function(require,module,exports){
+},{"../constants":221,"./Track":208,"./sounds":211,"./utils":214,"./utils/createReverbBuffer":213,"./utils/startWebAudioAPI":215,"events":1,"nmap":34,"web-audio-scheduler":199,"worker-timer":205}],208:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64878,8 +64873,6 @@ var Track = function (_events$EventEmitter) {
   }, {
     key: "sequence",
     value: function sequence(e) {
-      var _this2 = this;
-
       var playbackTime = e.playbackTime;
 
       this.counter -= 1;
@@ -64891,14 +64884,16 @@ var Track = function (_events$EventEmitter) {
       var index = this.index % (this.loopLength + 1);
       var counter = NOTE_INTERVALS[this.noteLength];
 
-      this.matrix[index].forEach(function (value, index) {
-        if (value !== 0) {
-          var noteNumber = NOTE_NUMBERS[N - 1 - index + _this2.pitchShift];
-          var duration = computeDurationFromBPM(_this2.bpm, NOTE_LENGTHS[_this2.noteLength]);
+      for (var i = 0; i < N; i++) {
+        var value = this.matrix[i][index];
 
-          _this2.instrument(_this2.destination, playbackTime, noteNumber, duration);
+        if (value !== 0) {
+          var noteNumber = NOTE_NUMBERS[N - 1 - i + this.pitchShift];
+          var duration = computeDurationFromBPM(this.bpm, NOTE_LENGTHS[this.noteLength]);
+
+          this.instrument(this.destination, playbackTime, noteNumber, duration);
         }
-      });
+      }
 
       this.index += 1;
       this.counter = counter;
@@ -65418,7 +65413,7 @@ var LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
 
 var _require = require("../utils/matrix");
 
-var pluck2D = _require.pluck2D;
+var to3DIndex = _require.to3DIndex;
 
 var _require2 = require("../constants");
 
@@ -65455,7 +65450,7 @@ var TrackCtrl = function (_React$Component) {
       var sceneMat = [nmap(N, function (_, i) {
         return i === state.scene ? 1 : 0;
       })];
-      var matrix = pluck2D(this.props.matrix, track, state.scene);
+      var matrix = this.props.matrix.axis[track][state.scene];
       var ctrlColor = EMPTY_COLOR + ";" + TRACK_COLORS[track];
       var updateState = function updateState(dataType) {
         return function (e) {
@@ -65493,26 +65488,15 @@ var TrackCtrl = function (_React$Component) {
 
 TrackCtrl.propTypes = {
   actions: React.PropTypes.object.isRequired,
-  matrix: React.PropTypes.array.isRequired,
+  matrix: React.PropTypes.object.isRequired,
   track: React.PropTypes.number.isRequired,
   state: React.PropTypes.object.isRequired
 };
 
 
-function to3DIndex(track, scene, row, col) {
-  switch (track) {
-    case 0:
-      return [scene, row, col];
-    case 1:
-      return [col, scene, row];
-    case 2:
-      return [row, col, scene];
-  }
-}
-
 module.exports = TrackCtrl;
 
-},{"../constants":221,"../utils/matrix":231,"./LabeledMatrixCtrl":216,"nmap":34,"react":187}],220:[function(require,module,exports){
+},{"../constants":221,"../utils/matrix":233,"./LabeledMatrixCtrl":216,"nmap":34,"react":187}],220:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65595,7 +65579,7 @@ var App = function (_React$Component) {
 App.propTypes = {
   actions: React.PropTypes.object.isRequired,
   master: React.PropTypes.object.isRequired,
-  matrix: React.PropTypes.array.isRequired,
+  matrix: React.PropTypes.object.isRequired,
   track: React.PropTypes.array.isRequired
 };
 
@@ -65683,7 +65667,7 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./actions":206,"./audio/Sequencer":207,"./containers/App":222,"./middlewares/audio-timeline":224,"./midi/LaunchPadMK2":225,"./reducers":226,"./viewer/Viewer":233,"react":187,"react-dom":37,"react-redux":40,"redux":193,"request-midi-access":195}],224:[function(require,module,exports){
+},{"./actions":206,"./audio/Sequencer":207,"./containers/App":222,"./middlewares/audio-timeline":224,"./midi/LaunchPadMK2":225,"./reducers":228,"./viewer/Viewer":235,"react":187,"react-dom":37,"react-redux":40,"redux":193,"request-midi-access":195}],224:[function(require,module,exports){
 "use strict";
 
 var ACTION_TYPE_EMIT = "@@audio-timeline/EMIT";
@@ -65732,8 +65716,6 @@ module.exports = audioTimeline;
 },{}],225:[function(require,module,exports){
 "use strict";
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -65747,11 +65729,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var nmap = require("nmap");
 var events = require("events");
 var WebMIDIEmitter = require("web-midi-emitter");
-var actions = require("../actions");
 
-var _require = require("../utils/matrix");
+var _require = require("./utils");
 
-var pluck2D = _require.pluck2D;
+var toNoteNumber = _require.toNoteNumber;
+
+var _createAction = require("./createAction");
 
 var _require2 = require("../constants");
 
@@ -65809,10 +65792,10 @@ var LaunchPadMK2 = function (_events$EventEmitter) {
   }, {
     key: "setState",
     value: function setState(state) {
-      if (this._device) {
+      if (this._device && this._device.input) {
         this._state = state;
         this._trackState = state.track[this._state.master.track];
-        this._matrix = pluck2D(this._state.matrix, this._state.master.track, this._trackState.scene);
+        this._matrix = this._state.matrix.axis[this._state.master.track][this._trackState.scene];
         this._tick = this._state.ticks[this._state.master.track];
         this.render();
       }
@@ -65820,7 +65803,7 @@ var LaunchPadMK2 = function (_events$EventEmitter) {
   }, {
     key: "recv",
     value: function recv(st, d1, d2) {
-      var action = this.getAction(st, d1, d2);
+      var action = this.createAction(st, d1, d2);
 
       if (action) {
         this.emit("dispatch", action);
@@ -65900,16 +65883,37 @@ var LaunchPadMK2 = function (_events$EventEmitter) {
       }
     }
   }, {
-    key: "getAction",
-    value: function getAction(st, d1, d2) {
-      return _getAction(this._state.master.track, this._trackState.scene, st, d1, d2);
+    key: "createAction",
+    value: function createAction(st, d1, d2) {
+      return _createAction(this._state.master.track, this._trackState.scene, st, d1, d2);
     }
   }]);
 
   return LaunchPadMK2;
 }(events.EventEmitter);
 
-function _getAction(track, scene, st, d1, d2) {
+module.exports = LaunchPadMK2;
+
+},{"../constants":221,"./createAction":226,"./utils":227,"events":1,"nmap":34,"web-midi-emitter":204}],226:[function(require,module,exports){
+"use strict";
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var actions = require("../actions");
+
+var _require = require("../utils/matrix");
+
+var to3DIndex = _require.to3DIndex;
+
+var _require2 = require("./utils");
+
+var fromNoteNumber = _require2.fromNoteNumber;
+
+var STATE_NAMES = ["pitchShift", "loopLength", "noteLength"];
+
+function createAction(track, scene, st, d1, d2) {
   if (st === 0x90 && d2 !== 0) {
     var _fromNoteNumber = fromNoteNumber(d1);
 
@@ -65955,28 +65959,21 @@ function _getAction(track, scene, st, d1, d2) {
   }
 }
 
-function fromNoteNumber(value) {
-  return [value % 10 - 1, 8 - Math.floor(value / 10)];
-}
+module.exports = createAction;
 
-function toNoteNumber(row, col) {
-  return 80 - row * 10 + (col + 1);
-}
+},{"../actions":206,"../utils/matrix":233,"./utils":227}],227:[function(require,module,exports){
+"use strict";
 
-function to3DIndex(track, scene, row, col) {
-  switch (track) {
-    case 0:
-      return [scene, row, col];
-    case 1:
-      return [col, scene, row];
-    case 2:
-      return [row, col, scene];
+module.exports = {
+  fromNoteNumber: function fromNoteNumber(value) {
+    return [value % 10 - 1, 8 - Math.floor(value / 10)];
+  },
+  toNoteNumber: function toNoteNumber(row, col) {
+    return 80 - row * 10 + (col + 1);
   }
-}
+};
 
-module.exports = LaunchPadMK2;
-
-},{"../actions":206,"../constants":221,"../utils/matrix":231,"events":1,"nmap":34,"web-midi-emitter":204}],226:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65992,7 +65989,7 @@ module.exports = redux.combineReducers({
   track: track
 });
 
-},{"./master":227,"./matrix":228,"./ticks":229,"./track":230,"redux":193}],227:[function(require,module,exports){
+},{"./master":229,"./matrix":230,"./ticks":231,"./track":232,"redux":193}],229:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -66045,7 +66042,7 @@ module.exports = {
   }
 };
 
-},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232}],228:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":234}],230:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -66055,19 +66052,30 @@ var _require = require("../utils/random");
 
 var coin = _require.coin;
 
-var _require2 = require("../constants");
+var _require2 = require("../utils/matrix");
 
-var N = _require2.N;
+var pluck = _require2.pluck;
+
+var _require3 = require("../constants");
+
+var N = _require3.N;
 
 
 var rand = function rand() {
   return coin(0.1);
 };
 var createMatrix = function createMatrix(fn) {
-  return nmap(N, function () {
+  var data = nmap(N, function () {
     return nmap(N, function () {
       return nmap(N, fn);
     });
+  });
+
+  return { data: data, axis: createAxis(data) };
+};
+var createAxis = function createAxis(data) {
+  return [0, 1, 2].map(function (i) {
+    return pluck(data, i);
   });
 };
 
@@ -66076,9 +66084,9 @@ module.exports = function () {
   var action = arguments[1];
 
   if (action.type === types.TOGGLE_MATRIX) {
-    state = JSON.parse(JSON.stringify(state));
-    state[action.i][action.j][action.k] = 1 - state[action.i][action.j][action.k];
-    return state;
+    var data = JSON.parse(JSON.stringify(state.data));
+    data[action.i][action.j][action.k] = 1 - data[action.i][action.j][action.k];
+    return { data: data, axis: createAxis(data) };
   }
   if (action.type === types.RANDOM) {
     return createMatrix(rand);
@@ -66091,7 +66099,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232,"nmap":34}],229:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/matrix":233,"../utils/random":234,"nmap":34}],231:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -66108,7 +66116,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants/ActionTypes":220}],230:[function(require,module,exports){
+},{"../constants/ActionTypes":220}],232:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -66150,7 +66158,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232}],231:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":234}],233:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -66161,38 +66169,47 @@ var N = _require.N;
 
 
 module.exports = {
-  pluck2D: function pluck2D(matrix, axis, $) {
+  pluck: function pluck(matrix, axis) {
     switch (axis) {
       case 0:
         return nmap(N, function (_, i) {
           return nmap(N, function (_, j) {
-            return matrix[$][i][j];
+            return nmap(N, function (_, k) {
+              return matrix[i][j][k];
+            });
           });
         });
       case 1:
         return nmap(N, function (_, i) {
           return nmap(N, function (_, j) {
-            return matrix[j][$][i];
+            return nmap(N, function (_, k) {
+              return matrix[k][i][j];
+            });
           });
         });
       case 2:
         return nmap(N, function (_, i) {
           return nmap(N, function (_, j) {
-            return matrix[i][j][$];
+            return nmap(N, function (_, k) {
+              return matrix[j][k][i];
+            });
           });
         });
     }
   },
-  rotate: function rotate(matrix) {
-    return nmap(N, function (_, i) {
-      return nmap(N, function (_, j) {
-        return matrix[j][i];
-      });
-    });
+  to3DIndex: function to3DIndex(track, scene, row, col) {
+    switch (track) {
+      case 0:
+        return [scene, row, col];
+      case 1:
+        return [col, scene, row];
+      case 2:
+        return [row, col, scene];
+    }
   }
 };
 
-},{"../constants":221,"nmap":34}],232:[function(require,module,exports){
+},{"../constants":221,"nmap":34}],234:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -66210,7 +66227,7 @@ module.exports = {
   }
 };
 
-},{}],233:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -66299,8 +66316,7 @@ var Viewer = function () {
     key: "setState",
     value: function setState(state) {
       var master = state.master;
-      var matrix = state.matrix;
-
+      var matrix = state.matrix.data;
       var selected = master.track;
       var colors = this._colors;
 

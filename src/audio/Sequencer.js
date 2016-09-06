@@ -8,7 +8,6 @@ const Track = require("./Track");
 const sounds = require("./sounds");
 const createReverbBuffer = require("./utils/createReverbBuffer");
 const startWebAudioAPI = require("./utils/startWebAudioAPI");
-const { pluck2D, rotate } = require("../utils/matrix");
 const { computeDurationFromBPM } = require("./utils");
 const { BPM_MAP } = require("../constants");
 
@@ -39,10 +38,10 @@ class Sequencer extends events.EventEmitter {
     this.bpm = BPM_MAP[state.master.bpm];
 
     this.tracks.forEach((track, i) => {
-      const _state = state.track[i];
-      const matrix = rotate(pluck2D(state.matrix, i, _state.scene));
+      const trackState = state.track[i];
+      const matrix = state.matrix.axis[i][trackState.scene];
 
-      track.setState({ ..._state, matrix, bpm: this.bpm });
+      track.setState({ ...trackState, matrix, bpm: this.bpm });
     });
 
     this.play(state.master.play);

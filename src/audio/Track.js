@@ -46,14 +46,16 @@ class Track extends events.EventEmitter {
     const index = this.index % (this.loopLength + 1);
     const counter = NOTE_INTERVALS[this.noteLength];
 
-    this.matrix[index].forEach((value, index) => {
+    for (let i = 0; i < N; i++) {
+      const value = this.matrix[i][index];
+
       if (value !== 0) {
-        const noteNumber = NOTE_NUMBERS[(N-1) - index + this.pitchShift];
+        const noteNumber = NOTE_NUMBERS[(N - 1) - i + this.pitchShift];
         const duration = computeDurationFromBPM(this.bpm, NOTE_LENGTHS[this.noteLength]);
 
         this.instrument(this.destination, playbackTime, noteNumber, duration);
       }
-    });
+    }
 
     this.index += 1;
     this.counter = counter;

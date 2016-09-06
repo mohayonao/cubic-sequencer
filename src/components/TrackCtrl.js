@@ -3,13 +3,13 @@
 const nmap = require("nmap");
 const React = require("react");
 const LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
-const { pluck2D } = require("../utils/matrix");
+const { to3DIndex } = require("../utils/matrix");
 const { N, EMPTY_COLOR, TRACK_COLORS } = require("../constants");
 
 class TrackCtrl extends React.Component {
   static propTypes = {
     actions: React.PropTypes.object.isRequired,
-    matrix : React.PropTypes.array.isRequired,
+    matrix : React.PropTypes.object.isRequired,
     track  : React.PropTypes.number.isRequired,
     state  : React.PropTypes.object.isRequired,
   };
@@ -20,7 +20,7 @@ class TrackCtrl extends React.Component {
     const loopLengthMat = [ nmap(N, (_, i) => i === state.loopLength ? 1 : 0) ];
     const noteLengthMat = [ nmap(N, (_, i) => i === state.noteLength ? 1 : 0) ];
     const sceneMat = [ nmap(N, (_, i) => i === state.scene ? 1 : 0) ];
-    const matrix = pluck2D(this.props.matrix, track, state.scene);
+    const matrix = this.props.matrix.axis[track][state.scene];
     const ctrlColor = `${ EMPTY_COLOR };${ TRACK_COLORS[track] }`;
     const updateState = (dataType) => (e) => {
       actions.updateState(track, dataType, e.col);
@@ -43,14 +43,6 @@ class TrackCtrl extends React.Component {
           data={ matrix } color={ ctrlColor } action={ updateMatrix() } />
       </div>
     );
-  }
-}
-
-function to3DIndex(track, scene, row, col) {
-  switch (track) {
-  case 0: return [ scene, row, col];
-  case 1: return [ col, scene, row ];
-  case 2: return [ row, col, scene ];
   }
 }
 

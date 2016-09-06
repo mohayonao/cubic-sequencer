@@ -11,7 +11,7 @@ class App extends React.Component {
   static propTypes = {
     actions: React.PropTypes.object.isRequired,
     master : React.PropTypes.object.isRequired,
-    matrix : React.PropTypes.array.isRequired,
+    matrix : React.PropTypes.object.isRequired,
     track  : React.PropTypes.array.isRequired,
   };
 

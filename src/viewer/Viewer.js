@@ -70,7 +70,8 @@ class Viewer {
   }
 
   setState(state) {
-    const { master, matrix } = state;
+    const master = state.master;
+    const matrix = state.matrix.data;
     const selected = master.track;
     const colors = this._colors;
 
