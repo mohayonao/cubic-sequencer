@@ -20,7 +20,7 @@ class CubeSeqCtrl extends React.Component {
   static propTypes = {
     dispatch: React.PropTypes.func.isRequired,
     master: React.PropTypes.object.isRequired,
-    matrix: React.PropTypes.object.isRequired,
+    matrix: React.PropTypes.array.isRequired,
     track: React.PropTypes.object.isRequired,
   };
 

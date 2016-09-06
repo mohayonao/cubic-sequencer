@@ -1,29 +1,23 @@
 "use strict";
 
-const redux = require("redux");
 const nmap = require("nmap");
 const coin = require("../utils/coin");
 const { N } = require("../consts");
 
-const random = () => coin(0.1);
+const rand = () => coin(0.1);
+const createMatrix = fn => nmap(N, () => nmap(N, () => nmap(N, fn)));
 
-module.exports = redux.combineReducers(nmap(N, (_, i) => {
-  return redux.combineReducers(nmap(N, (_, j) => {
-    return redux.combineReducers(nmap(N, (_, k) => {
-      return (state = random(), action) => {
-        if (action.type === "TOGGLE_MATRIX") {
-          if (action.i === i && action.j === j && action.k === k) {
-            return 1 - state;
-          }
-        }
-        if (action.type === "RANDOM") {
-          return random();
-        }
-        if (action.type === "CLEAR") {
-          return 0;
-        }
-        return state;
-      };
-    }));
-  }));
-}));
+module.exports = (state = createMatrix(rand), action) => {
+  if (action.type === "TOGGLE_MATRIX") {
+    state = JSON.parse(JSON.stringify(state));
+    state[action.i][action.j][action.k] = 1 - state[action.i][action.j][action.k];
+    return state;
+  }
+  if (action.type === "RANDOM") {
+    return createMatrix(rand);
+  }
+  if (action.type === "CLEAR") {
+    return createMatrix(() => 0);
+  }
+  return state;
+};
