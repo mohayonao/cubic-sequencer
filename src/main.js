@@ -4,9 +4,9 @@ const React = require("react");
 const ReactDom = require("react-dom");
 const redux = require("redux");
 const { Provider } = require("react-redux");
-const CubeSeqCtrl = require("./components/CubeSeqCtrl");
+const App = require("./containers/App");
 const Viewer = require("./viewer/Viewer");
-const Sequencer = require("./sequencer/Sequencer");
+const Sequencer = require("./audio/Sequencer");
 const app = require("./reducers");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -38,5 +38,5 @@ window.addEventListener("DOMContentLoaded", () => {
   updateState();
   requestAnimationFrame(animate);
 
-  ReactDom.render(<Provider store={ store }><CubeSeqCtrl /></Provider>, document.getElementById("app"));
+  ReactDom.render(<Provider store={ store }><App /></Provider>, document.getElementById("app"));
 });

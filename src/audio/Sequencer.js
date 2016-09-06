@@ -6,12 +6,10 @@ const WebAudioScheduler = require("web-audio-scheduler");
 const WorkerTimer = require("worker-timer");
 const Track = require("./Track");
 const sounds = require("./sounds");
-const createReverbBuffer = require("./createReverbBuffer");
-const startWebAudioAPI = require("./startWebAudioAPI");
-const pluck2D = require("../utils/pluck2D");
-const computeDurationFromBPM = require("../utils/computeDurationFromBPM");
-
-const { N } = require("../consts");
+const createReverbBuffer = require("./utils/createReverbBuffer");
+const startWebAudioAPI = require("./utils/startWebAudioAPI");
+const { pluck2D, rotate } = require("../utils/matrix");
+const { computeDurationFromBPM } = require("./utils");
 
 const BPM_MAP = [ 120, 140, 160 ];
 
@@ -57,7 +55,7 @@ class Sequencer extends events.EventEmitter {
       this.sched.start(this.sequence);
     }
     if (this.sched.state === "running" && value === 0) {
-      this.sched.stop(true);
+      this.sched.stop();
     }
   }
 
@@ -71,10 +69,6 @@ class Sequencer extends events.EventEmitter {
 
     this.sched.insert(t1, this.sequence);
   }
-}
-
-function rotate(matrix) {
-  return nmap(N, (_, i) => nmap(N, (_, j) => matrix[j][i]));
 }
 
 module.exports = Sequencer;

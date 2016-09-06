@@ -1,13 +1,13 @@
 "use strict";
 
-const mtof = require("../../utils/mtof");
+const { computeFrequenceyFromNoteNumber } = require("../utils");
 
 function pad(destination, playbackTime, noteNumber, duration) {
   const t0 = playbackTime;
   const t1 = t0 + duration * 0.2;
   const t2 = t1 + duration * 0.8;
   const t3 = t2 + duration;
-  const freq = mtof(noteNumber);
+  const freq = computeFrequenceyFromNoteNumber(noteNumber);
   const audioContext = destination.context;
   const oscillator1 = audioContext.createOscillator();
   const oscillator2 = audioContext.createOscillator();

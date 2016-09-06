@@ -1,50 +1,40 @@
 "use strict";
 
-const React = require("react");
-const { connect } = require("react-redux");
 const nmap = require("nmap");
+const React = require("react");
 const MatrixCtrl = require("./MatrixCtrl");
-const updateState = require("../actions/updateState");
-const toggleMatrix = require("../actions/toggleMatrix");
-const pluck2D = require("../utils/pluck2D");
-const { N, DEFAULT_COLOR, TRACK_COLORS } = require("../consts");
+const { pluck2D } = require("../utils/matrix");
+const { N, DEFAULT_COLOR, TRACK_COLORS } = require("../constants");
 
 class TrackCtrl extends React.Component {
   static propTypes = {
-    dispatch: React.PropTypes.func.isRequired,
-    matrix: React.PropTypes.array.isRequired,
-    track: React.PropTypes.number.isRequired,
-    pitchShift: React.PropTypes.number.isRequired,
-    loopLength: React.PropTypes.number.isRequired,
-    noteLength: React.PropTypes.number.isRequired,
-    scene: React.PropTypes.number.isRequired,
+    actions: React.PropTypes.object.isRequired,
+    matrix : React.PropTypes.array.isRequired,
+    track  : React.PropTypes.number.isRequired,
+    state   : React.PropTypes.object.isRequired,
   };
 
   updateState(dataType) {
+    const { actions, track } = this.props;
     return (e) => {
-      const track = this.props.track;
-      const dataValue = e.col;
-
-      this.props.dispatch(updateState(track, dataType, dataValue));
+      actions.updateState(track, dataType, e.col);
     };
   }
 
   updateMatrix() {
+    const { actions, track, state } = this.props;
     return (e) => {
-      const track = this.props.track;
-      const scene = this.props.scene;
-
-      this.props.dispatch(toggleMatrix(...to3DIndex(track, scene, e.row, e.col)));
+      actions.toggleMatrix(...to3DIndex(track, state.scene, e.row, e.col));
     };
   }
 
   render() {
-    const { track, pitchShift, loopLength, noteLength, scene } = this.props;
-    const pitchShiftMat = [ nmap(N, (_, i) => i === pitchShift ? 1 : 0) ];
-    const loopLengthMat = [ nmap(N, (_, i) => i === loopLength ? 1 : 0) ];
-    const noteLengthMat = [ nmap(N, (_, i) => i === noteLength ? 1 : 0) ];
-    const sceneMat = [ nmap(N, (_, i) => i === scene ? 1 : 0) ];
-    const matrix = pluck2D(this.props.matrix, track, scene);
+    const { track, state } = this.props;
+    const pitchShiftMat = [ nmap(N, (_, i) => i === state.pitchShift ? 1 : 0) ];
+    const loopLengthMat = [ nmap(N, (_, i) => i === state.loopLength ? 1 : 0) ];
+    const noteLengthMat = [ nmap(N, (_, i) => i === state.noteLength ? 1 : 0) ];
+    const sceneMat = [ nmap(N, (_, i) => i === state.scene ? 1 : 0) ];
+    const matrix = pluck2D(this.props.matrix, track, state.scene);
     const ctrlColor = `${ DEFAULT_COLOR };${ TRACK_COLORS[track] }`;
 
     return (
@@ -82,6 +72,4 @@ function to3DIndex(track, scene, row, col) {
   }
 }
 
-module.exports = connect((state) => {
-  return { track: state.master.track, ...state.track[state.master.track], matrix: state.matrix };
-})(TrackCtrl);
+module.exports = TrackCtrl;

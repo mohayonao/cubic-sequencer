@@ -2,7 +2,7 @@
 
 const THREE = require("three");
 const nmap = require("nmap");
-const { N, TRACK_COLORS } = require("../consts");
+const { N, TRACK_COLORS } = require("../constants");
 const rotations = [
   new Float32Array([ Math.PI/2, -Math.PI/2, 0 ]),
   new Float32Array([-Math.PI/2, 0, Math.PI/2]),
@@ -32,8 +32,8 @@ class Viewer {
     this.scene.add(this.group);
 
     this.camera = new THREE.PerspectiveCamera(60, 1, 1, 5000);
-    this.camera.position.y = Math.cos(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000; // 1500;
-    this.camera.position.z = Math.sin(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000; // 2600;
+    this.camera.position.y = Math.cos(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000;
+    this.camera.position.z = Math.sin(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000;
     this.camera.lookAt({ x: 0, y: 0, z: 0 });
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });

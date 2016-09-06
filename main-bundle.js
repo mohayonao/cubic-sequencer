@@ -21910,13 +21910,13 @@ exports.__esModule = true;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-exports['default'] = applyMiddleware;
+exports["default"] = applyMiddleware;
 
 var _compose = require('./compose');
 
 var _compose2 = _interopRequireDefault(_compose);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 /**
  * Creates a store enhancer that applies middleware to the dispatch method
@@ -21940,8 +21940,8 @@ function applyMiddleware() {
   }
 
   return function (createStore) {
-    return function (reducer, preloadedState, enhancer) {
-      var store = createStore(reducer, preloadedState, enhancer);
+    return function (reducer, initialState, enhancer) {
+      var store = createStore(reducer, initialState, enhancer);
       var _dispatch = store.dispatch;
       var chain = [];
 
@@ -21954,7 +21954,7 @@ function applyMiddleware() {
       chain = middlewares.map(function (middleware) {
         return middleware(middlewareAPI);
       });
-      _dispatch = _compose2['default'].apply(undefined, chain)(store.dispatch);
+      _dispatch = _compose2["default"].apply(undefined, chain)(store.dispatch);
 
       return _extends({}, store, {
         dispatch: _dispatch
@@ -21966,7 +21966,7 @@ function applyMiddleware() {
 'use strict';
 
 exports.__esModule = true;
-exports['default'] = bindActionCreators;
+exports["default"] = bindActionCreators;
 function bindActionCreator(actionCreator, dispatch) {
   return function () {
     return dispatch(actionCreator.apply(undefined, arguments));
@@ -22019,7 +22019,7 @@ function bindActionCreators(actionCreators, dispatch) {
 'use strict';
 
 exports.__esModule = true;
-exports['default'] = combineReducers;
+exports["default"] = combineReducers;
 
 var _createStore = require('./createStore');
 
@@ -22031,7 +22031,7 @@ var _warning = require('./utils/warning');
 
 var _warning2 = _interopRequireDefault(_warning);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function getUndefinedStateErrorMessage(key, action) {
   var actionType = action && action.type;
@@ -22040,24 +22040,20 @@ function getUndefinedStateErrorMessage(key, action) {
   return 'Given action ' + actionName + ', reducer "' + key + '" returned undefined. ' + 'To ignore an action, you must explicitly return the previous state.';
 }
 
-function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, unexpectedKeyCache) {
+function getUnexpectedStateShapeWarningMessage(inputState, reducers, action) {
   var reducerKeys = Object.keys(reducers);
-  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'preloadedState argument passed to createStore' : 'previous state received by the reducer';
+  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'initialState argument passed to createStore' : 'previous state received by the reducer';
 
   if (reducerKeys.length === 0) {
     return 'Store does not have a valid reducer. Make sure the argument passed ' + 'to combineReducers is an object whose values are reducers.';
   }
 
-  if (!(0, _isPlainObject2['default'])(inputState)) {
+  if (!(0, _isPlainObject2["default"])(inputState)) {
     return 'The ' + argumentName + ' has unexpected type of "' + {}.toString.call(inputState).match(/\s([a-z|A-Z]+)/)[1] + '". Expected argument to be an object with the following ' + ('keys: "' + reducerKeys.join('", "') + '"');
   }
 
   var unexpectedKeys = Object.keys(inputState).filter(function (key) {
-    return !reducers.hasOwnProperty(key) && !unexpectedKeyCache[key];
-  });
-
-  unexpectedKeys.forEach(function (key) {
-    unexpectedKeyCache[key] = true;
+    return !reducers.hasOwnProperty(key);
   });
 
   if (unexpectedKeys.length > 0) {
@@ -22102,22 +22098,11 @@ function combineReducers(reducers) {
   var finalReducers = {};
   for (var i = 0; i < reducerKeys.length; i++) {
     var key = reducerKeys[i];
-
-    if (process.env.NODE_ENV !== 'production') {
-      if (typeof reducers[key] === 'undefined') {
-        (0, _warning2['default'])('No reducer provided for key "' + key + '"');
-      }
-    }
-
     if (typeof reducers[key] === 'function') {
       finalReducers[key] = reducers[key];
     }
   }
   var finalReducerKeys = Object.keys(finalReducers);
-
-  if (process.env.NODE_ENV !== 'production') {
-    var unexpectedKeyCache = {};
-  }
 
   var sanityError;
   try {
@@ -22135,9 +22120,9 @@ function combineReducers(reducers) {
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache);
+      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action);
       if (warningMessage) {
-        (0, _warning2['default'])(warningMessage);
+        (0, _warning2["default"])(warningMessage);
       }
     }
 
@@ -22184,26 +22169,28 @@ function compose() {
     return function (arg) {
       return arg;
     };
-  }
+  } else {
+    var _ret = function () {
+      var last = funcs[funcs.length - 1];
+      var rest = funcs.slice(0, -1);
+      return {
+        v: function v() {
+          return rest.reduceRight(function (composed, f) {
+            return f(composed);
+          }, last.apply(undefined, arguments));
+        }
+      };
+    }();
 
-  if (funcs.length === 1) {
-    return funcs[0];
+    if (typeof _ret === "object") return _ret.v;
   }
-
-  var last = funcs[funcs.length - 1];
-  var rest = funcs.slice(0, -1);
-  return function () {
-    return rest.reduceRight(function (composed, f) {
-      return f(composed);
-    }, last.apply(undefined, arguments));
-  };
 }
 },{}],192:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
 exports.ActionTypes = undefined;
-exports['default'] = createStore;
+exports["default"] = createStore;
 
 var _isPlainObject = require('lodash/isPlainObject');
 
@@ -22213,7 +22200,7 @@ var _symbolObservable = require('symbol-observable');
 
 var _symbolObservable2 = _interopRequireDefault(_symbolObservable);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 /**
  * These are private action types reserved by Redux.
@@ -22236,7 +22223,7 @@ var ActionTypes = exports.ActionTypes = {
  * @param {Function} reducer A function that returns the next state tree, given
  * the current state tree and the action to handle.
  *
- * @param {any} [preloadedState] The initial state. You may optionally specify it
+ * @param {any} [initialState] The initial state. You may optionally specify it
  * to hydrate the state from the server in universal apps, or to restore a
  * previously serialized user session.
  * If you use `combineReducers` to produce the root reducer function, this must be
@@ -22250,12 +22237,12 @@ var ActionTypes = exports.ActionTypes = {
  * @returns {Store} A Redux store that lets you read the state, dispatch actions
  * and subscribe to changes.
  */
-function createStore(reducer, preloadedState, enhancer) {
+function createStore(reducer, initialState, enhancer) {
   var _ref2;
 
-  if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
-    enhancer = preloadedState;
-    preloadedState = undefined;
+  if (typeof initialState === 'function' && typeof enhancer === 'undefined') {
+    enhancer = initialState;
+    initialState = undefined;
   }
 
   if (typeof enhancer !== 'undefined') {
@@ -22263,7 +22250,7 @@ function createStore(reducer, preloadedState, enhancer) {
       throw new Error('Expected the enhancer to be a function.');
     }
 
-    return enhancer(createStore)(reducer, preloadedState);
+    return enhancer(createStore)(reducer, initialState);
   }
 
   if (typeof reducer !== 'function') {
@@ -22271,7 +22258,7 @@ function createStore(reducer, preloadedState, enhancer) {
   }
 
   var currentReducer = reducer;
-  var currentState = preloadedState;
+  var currentState = initialState;
   var currentListeners = [];
   var nextListeners = currentListeners;
   var isDispatching = false;
@@ -22363,7 +22350,7 @@ function createStore(reducer, preloadedState, enhancer) {
    * return something else (for example, a Promise you can await).
    */
   function dispatch(action) {
-    if (!(0, _isPlainObject2['default'])(action)) {
+    if (!(0, _isPlainObject2["default"])(action)) {
       throw new Error('Actions must be plain objects. ' + 'Use custom middleware for async actions.');
     }
 
@@ -22428,6 +22415,7 @@ function createStore(reducer, preloadedState, enhancer) {
        * be used to unsubscribe the observable from the store, and prevent further
        * emission of values from the observable.
        */
+
       subscribe: function subscribe(observer) {
         if (typeof observer !== 'object') {
           throw new TypeError('Expected the observer to be an object.');
@@ -22443,7 +22431,7 @@ function createStore(reducer, preloadedState, enhancer) {
         var unsubscribe = outerSubscribe(observeState);
         return { unsubscribe: unsubscribe };
       }
-    }, _ref[_symbolObservable2['default']] = function () {
+    }, _ref[_symbolObservable2["default"]] = function () {
       return this;
     }, _ref;
   }
@@ -22458,7 +22446,7 @@ function createStore(reducer, preloadedState, enhancer) {
     subscribe: subscribe,
     getState: getState,
     replaceReducer: replaceReducer
-  }, _ref2[_symbolObservable2['default']] = observable, _ref2;
+  }, _ref2[_symbolObservable2["default"]] = observable, _ref2;
 }
 },{"lodash/isPlainObject":33,"symbol-observable":195}],193:[function(require,module,exports){
 (function (process){
@@ -22491,7 +22479,7 @@ var _warning = require('./utils/warning');
 
 var _warning2 = _interopRequireDefault(_warning);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 /*
 * This is a dummy function to check if the function name has been altered by minification.
@@ -22500,20 +22488,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 function isCrushed() {}
 
 if (process.env.NODE_ENV !== 'production' && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
-  (0, _warning2['default'])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
+  (0, _warning2["default"])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
 }
 
-exports.createStore = _createStore2['default'];
-exports.combineReducers = _combineReducers2['default'];
-exports.bindActionCreators = _bindActionCreators2['default'];
-exports.applyMiddleware = _applyMiddleware2['default'];
-exports.compose = _compose2['default'];
+exports.createStore = _createStore2["default"];
+exports.combineReducers = _combineReducers2["default"];
+exports.bindActionCreators = _bindActionCreators2["default"];
+exports.applyMiddleware = _applyMiddleware2["default"];
+exports.compose = _compose2["default"];
 }).call(this,require('_process'))
 },{"./applyMiddleware":188,"./bindActionCreators":189,"./combineReducers":190,"./compose":191,"./createStore":192,"./utils/warning":194,"_process":36}],194:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
-exports['default'] = warning;
+exports["default"] = warning;
 /**
  * Prints a warning in the console if it exists.
  *
@@ -22536,50 +22524,26 @@ function warning(message) {
   /* eslint-enable no-empty */
 }
 },{}],195:[function(require,module,exports){
-module.exports = require('./lib/index');
-
-},{"./lib/index":196}],196:[function(require,module,exports){
 (function (global){
+/* global window */
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
+module.exports = require('./ponyfill')(global || window || this);
 
-var _ponyfill = require('./ponyfill');
-
-var _ponyfill2 = _interopRequireDefault(_ponyfill);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var root = undefined; /* global window */
-
-if (typeof global !== 'undefined') {
-	root = global;
-} else if (typeof window !== 'undefined') {
-	root = window;
-}
-
-var result = (0, _ponyfill2['default'])(root);
-exports['default'] = result;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill":197}],197:[function(require,module,exports){
+},{"./ponyfill":196}],196:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-exports['default'] = symbolObservablePonyfill;
-function symbolObservablePonyfill(root) {
+module.exports = function symbolObservablePonyfill(root) {
 	var result;
-	var _Symbol = root.Symbol;
+	var Symbol = root.Symbol;
 
-	if (typeof _Symbol === 'function') {
-		if (_Symbol.observable) {
-			result = _Symbol.observable;
+	if (typeof Symbol === 'function') {
+		if (Symbol.observable) {
+			result = Symbol.observable;
 		} else {
-			result = _Symbol('observable');
-			_Symbol.observable = result;
+			result = Symbol('observable');
+			Symbol.observable = result;
 		}
 	} else {
 		result = '@@observable';
@@ -22587,7 +22551,8 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],198:[function(require,module,exports){
+
+},{}],197:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -64324,10 +64289,10 @@ function symbolObservablePonyfill(root) {
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-},{}],199:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 module.exports = require("./lib");
 
-},{"./lib":202}],200:[function(require,module,exports){
+},{"./lib":201}],199:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64394,7 +64359,9 @@ var WebAudioScheduler = function (_events$EventEmitter) {
     }
   }, {
     key: "stop",
-    value: function stop(reset) {
+    value: function stop() {
+      var reset = arguments.length <= 0 || arguments[0] === undefined ? true : arguments[0];
+
       if (this._timerId !== 0) {
         this.timerAPI.clearInterval(this._timerId);
         this._timerId = 0;
@@ -64504,7 +64471,7 @@ var WebAudioScheduler = function (_events$EventEmitter) {
 
 module.exports = WebAudioScheduler;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaultContext":201,"./utils/defaults":203,"events":1}],201:[function(require,module,exports){
+},{"./defaultContext":200,"./utils/defaults":202,"events":1}],200:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -64512,11 +64479,11 @@ module.exports = {
     return Date.now() / 1000;
   }
 };
-},{}],202:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 "use strict";
 
 module.exports = require("./WebAudioScheduler");
-},{"./WebAudioScheduler":200}],203:[function(require,module,exports){
+},{"./WebAudioScheduler":199}],202:[function(require,module,exports){
 "use strict";
 
 function defaults(value, defaultValue) {
@@ -64524,7 +64491,7 @@ function defaults(value, defaultValue) {
 }
 
 module.exports = defaults;
-},{}],204:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64595,97 +64562,452 @@ if (global === global.window && global.URL && global.Blob && global.Worker) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],205:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 "use strict";
 
-module.exports = function (bpm) {
-  return { type: "CHANGE_BPM", bpm: bpm };
+var types = require("../constants/ActionTypes");
+
+module.exports = {
+  changeBPM: function changeBPM(bpm) {
+    return { type: types.CHANGE_BPM, bpm: bpm };
+  },
+  changeTrack: function changeTrack(track) {
+    return { type: types.CHANGE_TRACK, track: track };
+  },
+  clear: function clear() {
+    return { type: types.CLEAR };
+  },
+  random: function random() {
+    return { type: types.RANDOM };
+  },
+  toggleMatrix: function toggleMatrix(i, j, k) {
+    return { type: types.TOGGLE_MATRIX, i: i, j: j, k: k };
+  },
+  togglePlay: function togglePlay() {
+    return { type: types.TOGGLE_PLAY };
+  },
+  updateState: function updateState(track, dataType, dataValue) {
+    return { type: types.UPDATE_STATE, track: track, dataType: dataType, dataValue: dataValue };
+  }
 };
 
-},{}],206:[function(require,module,exports){
+},{"../constants/ActionTypes":217}],205:[function(require,module,exports){
 "use strict";
 
-module.exports = function (track) {
-  return { type: "CHANGE_TRACK", track: track };
-};
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-},{}],207:[function(require,module,exports){
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var events = require("events");
+var nmap = require("nmap");
+var WebAudioScheduler = require("web-audio-scheduler");
+var WorkerTimer = require("worker-timer");
+var Track = require("./Track");
+var sounds = require("./sounds");
+var createReverbBuffer = require("./utils/createReverbBuffer");
+var startWebAudioAPI = require("./utils/startWebAudioAPI");
+
+var _require = require("../utils/matrix");
+
+var pluck2D = _require.pluck2D;
+var rotate = _require.rotate;
+
+var _require2 = require("./utils");
+
+var computeDurationFromBPM = _require2.computeDurationFromBPM;
+
+
+var BPM_MAP = [120, 140, 160];
+
+var Sequencer = function (_events$EventEmitter) {
+  _inherits(Sequencer, _events$EventEmitter);
+
+  function Sequencer(audioContext) {
+    _classCallCheck(this, Sequencer);
+
+    var _this = _possibleConstructorReturn(this, (Sequencer.__proto__ || Object.getPrototypeOf(Sequencer)).call(this));
+
+    _this.bpm = 140;
+    _this.audioContext = audioContext;
+
+    _this.convolver = _this.audioContext.createConvolver();
+    _this.convolver.buffer = createReverbBuffer(_this.audioContext);
+    _this.convolver.connect(_this.audioContext.destination);
+
+    _this.sched = new WebAudioScheduler({ context: _this.audioContext, timerAPI: WorkerTimer });
+    _this.tracks = nmap(3, function (_, i) {
+      return new Track(_this.convolver, sounds[i]);
+    });
+
+    _this.tracks.forEach(function (track, i) {
+      track.on("tick", function (data) {
+        _this.emit("tick", _extends({}, data, { track: i }));
+      });
+    });
+
+    _this.sequence = _this.sequence.bind(_this);
+    return _this;
+  }
+
+  _createClass(Sequencer, [{
+    key: "update",
+    value: function update(state) {
+      var _this2 = this;
+
+      this.bpm = BPM_MAP[state.master.bpm];
+
+      this.tracks.forEach(function (track, i) {
+        var _state = state.track[i];
+        var matrix = rotate(pluck2D(state.matrix, i, _state.scene));
+
+        track.update(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
+      });
+
+      this.play(state.master.play);
+    }
+  }, {
+    key: "play",
+    value: function play() {
+      var value = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
+
+      startWebAudioAPI(this.audioContext);
+      if (this.sched.state === "suspended" && value === 1) {
+        this.sched.start(this.sequence);
+      }
+      if (this.sched.state === "running" && value === 0) {
+        this.sched.stop();
+      }
+    }
+  }, {
+    key: "sequence",
+    value: function sequence(e) {
+      var t0 = e.playbackTime;
+      var t1 = t0 + computeDurationFromBPM(this.bpm, 32);
+
+      this.tracks.forEach(function (track) {
+        track.sequence(e);
+      });
+
+      this.sched.insert(t1, this.sequence);
+    }
+  }]);
+
+  return Sequencer;
+}(events.EventEmitter);
+
+module.exports = Sequencer;
+
+},{"../utils/matrix":225,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
 "use strict";
 
-module.exports = function () {
-  return { type: "CLEAR" };
-};
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-},{}],208:[function(require,module,exports){
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var events = require("events");
+var nmap = require("nmap");
+
+var _require = require("./utils");
+
+var computeDurationFromBPM = _require.computeDurationFromBPM;
+
+var _require2 = require("../constants");
+
+var N = _require2.N;
+
+
+var NOTE_NUMBERS = [52, 57, 60, 62, 64, 65, 69, 72, 76, 79, 81, 83, 84, 86, 88];
+var NOTE_LENGTHS = [1, 2, 3, 4, 5, 6, 7, 8];
+var NOTE_INTERVALS = [32, 16, 12, 8, 7, 6, 5, 4];
+
+var Track = function (_events$EventEmitter) {
+  _inherits(Track, _events$EventEmitter);
+
+  function Track(destination, instrument) {
+    _classCallCheck(this, Track);
+
+    var _this = _possibleConstructorReturn(this, (Track.__proto__ || Object.getPrototypeOf(Track)).call(this));
+
+    _this.audioContext = destination.context;
+    _this.destination = destination;
+    _this.instrument = instrument;
+    _this.bpm = 0;
+    _this.pitchShift = 0;
+    _this.loopLength = 0;
+    _this.noteLength = 0;
+    _this.matrix = nmap(N, function () {
+      return nmap(N, function () {
+        return 0;
+      });
+    });
+
+    _this.index = 0;
+    _this.counter = 0;
+    return _this;
+  }
+
+  _createClass(Track, [{
+    key: "update",
+    value: function update(state) {
+      this.bpm = state.bpm;
+      this.matrix = state.matrix;
+      this.pitchShift = state.pitchShift;
+      this.loopLength = state.loopLength;
+      this.noteLength = state.noteLength;
+    }
+  }, {
+    key: "sequence",
+    value: function sequence(e) {
+      var _this2 = this;
+
+      var playbackTime = e.playbackTime;
+
+      this.counter -= 1;
+
+      if (0 < this.counter) {
+        return;
+      }
+
+      var index = this.index % (this.loopLength + 1);
+      var counter = NOTE_INTERVALS[this.noteLength];
+
+      this.matrix[index].forEach(function (value, index) {
+        if (value !== 0) {
+          var noteNumber = NOTE_NUMBERS[N - 1 - index + _this2.pitchShift];
+          var duration = computeDurationFromBPM(_this2.bpm, NOTE_LENGTHS[_this2.noteLength]);
+
+          _this2.instrument(_this2.destination, playbackTime, noteNumber, duration);
+        }
+      });
+
+      this.index += 1;
+      this.counter = counter;
+
+      this.emit("tick", { playbackTime: playbackTime, index: index });
+    }
+  }]);
+
+  return Track;
+}(events.EventEmitter);
+
+module.exports = Track;
+
+},{"../constants":218,"./utils":212,"events":1,"nmap":34}],207:[function(require,module,exports){
 "use strict";
 
-module.exports = function () {
-  return { type: "RANDOM" };
-};
+var _require = require("../utils");
 
-},{}],209:[function(require,module,exports){
+var computeFrequenceyFromNoteNumber = _require.computeFrequenceyFromNoteNumber;
+
+
+function beep(destination, playbackTime, noteNumber, duration) {
+  var t0 = playbackTime;
+  var t1 = t0 + duration * 0.25;
+  var freq = computeFrequenceyFromNoteNumber(noteNumber);
+  var audioContext = destination.context;
+  var oscillator = audioContext.createOscillator();
+  var gain = audioContext.createGain();
+
+  oscillator.frequency.value = freq * 2;
+  oscillator.start(t0);
+  oscillator.stop(t1);
+  oscillator.connect(gain);
+  oscillator.onended = function () {
+    oscillator.disconnect();
+    gain.disconnect();
+  };
+
+  gain.gain.value = 0.3;
+  gain.connect(destination);
+}
+
+module.exports = beep;
+
+},{"../utils":212}],208:[function(require,module,exports){
 "use strict";
 
-module.exports = function (i, j, k) {
-  return { type: "TOGGLE_MATRIX", i: i, j: j, k: k };
-};
+var _require = require("../utils");
 
-},{}],210:[function(require,module,exports){
+var computeFrequenceyFromNoteNumber = _require.computeFrequenceyFromNoteNumber;
+
+
+function epiano(destination, playbackTime, noteNumber, duration) {
+  var t0 = playbackTime;
+  var t1 = t0 + duration * 0.2;
+  var t2 = t1 + duration * 1.0;
+  var t3 = t2 + duration * 0.5;
+  var freq = computeFrequenceyFromNoteNumber(noteNumber);
+  var audioContext = destination.context;
+  var oscillator1 = audioContext.createOscillator();
+  var oscillator2 = audioContext.createOscillator();
+  var oscillator3 = audioContext.createOscillator();
+  var gain1 = audioContext.createGain();
+  var gain2 = audioContext.createGain();
+
+  oscillator1.frequency.value = freq;
+  oscillator1.detune.value = +4;
+  oscillator1.start(t0);
+  oscillator1.stop(t3);
+  oscillator1.connect(gain1);
+  oscillator1.onended = function () {
+    oscillator1.disconnect();
+    oscillator2.disconnect();
+    oscillator3.disconnect();
+    gain1.disconnect();
+    gain2.disconnect();
+  };
+
+  oscillator2.frequency.value = freq;
+  oscillator2.detune.value = -4;
+  oscillator2.start(t0);
+  oscillator2.stop(t3);
+  oscillator2.connect(gain1);
+
+  oscillator3.frequency.value = freq * 6;
+  oscillator3.start(t0);
+  oscillator3.stop(t3);
+  oscillator3.connect(gain2);
+
+  gain1.gain.setValueAtTime(0.4, t0);
+  gain1.gain.setValueAtTime(0.4, t1);
+  gain1.gain.linearRampToValueAtTime(0, t3);
+  gain1.connect(destination);
+
+  gain2.gain.setValueAtTime(freq * 2, t0);
+  gain2.gain.setValueAtTime(freq * 2, t1);
+  gain2.gain.linearRampToValueAtTime(freq * 0.5, t2);
+  gain2.connect(oscillator1.frequency);
+  gain2.connect(oscillator2.frequency);
+}
+
+module.exports = epiano;
+
+},{"../utils":212}],209:[function(require,module,exports){
 "use strict";
 
-module.exports = function () {
-  return { type: "TOGGLE_PLAY" };
-};
+module.exports = [require("./epiano"), require("./pad"), require("./beep")];
 
-},{}],211:[function(require,module,exports){
+},{"./beep":207,"./epiano":208,"./pad":210}],210:[function(require,module,exports){
 "use strict";
 
-module.exports = function (track, dataType, dataValue) {
-  return { type: "UPDATE_STATE", track: track, dataType: dataType, dataValue: dataValue };
-};
+var _require = require("../utils");
+
+var computeFrequenceyFromNoteNumber = _require.computeFrequenceyFromNoteNumber;
+
+
+function pad(destination, playbackTime, noteNumber, duration) {
+  var t0 = playbackTime;
+  var t1 = t0 + duration * 0.2;
+  var t2 = t1 + duration * 0.8;
+  var t3 = t2 + duration;
+  var freq = computeFrequenceyFromNoteNumber(noteNumber);
+  var audioContext = destination.context;
+  var oscillator1 = audioContext.createOscillator();
+  var oscillator2 = audioContext.createOscillator();
+  var gain = audioContext.createGain();
+
+  oscillator1.frequency.value = freq;
+  oscillator1.detune.setValueAtTime(0.5, t0);
+  oscillator1.detune.linearRampToValueAtTime(8, t2);
+  oscillator1.start(t0);
+  oscillator1.stop(t3);
+  oscillator1.connect(gain);
+
+  oscillator2.frequency.value = freq;
+  oscillator2.detune.setValueAtTime(-0.5, t0);
+  oscillator2.detune.linearRampToValueAtTime(-8, t2);
+  oscillator2.start(t0);
+  oscillator2.stop(t3);
+  oscillator2.connect(gain);
+
+  oscillator1.onended = function () {
+    oscillator1.disconnect();
+    oscillator2.disconnect();
+    gain.disconnect();
+  };
+
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(0.6, t1);
+  gain.gain.setValueAtTime(0.6, t2);
+  gain.gain.linearRampToValueAtTime(0, t3);
+  gain.connect(destination);
+}
+
+module.exports = pad;
+
+},{"../utils":212}],211:[function(require,module,exports){
+"use strict";
+
+function createReverb(len) {
+  var data = new Float32Array(len);
+
+  for (var i = 0; i < len; i++) {
+    data[i] = Math.random() * 2 - 1;
+    data[i] *= Math.pow(2, -i / 80);
+  }
+
+  return data;
+}
+
+function createReverbBuffer(audioContext) {
+  var data = [createReverb(16384)];
+  var buffer = audioContext.createBuffer(data.length, data[0].length, audioContext.sampleRate);
+
+  data.forEach(function (data, ch) {
+    buffer.getChannelData(ch).set(data);
+  });
+
+  return buffer;
+}
+
+module.exports = createReverbBuffer;
 
 },{}],212:[function(require,module,exports){
 "use strict";
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+module.exports = {
+  computeDurationFromBPM: function computeDurationFromBPM(bpm) {
+    var len = arguments.length <= 1 || arguments[1] === undefined ? 4 : arguments[1];
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var React = require("react");
-var MasterCtrl = require("./MasterCtrl");
-var TrackCtrl = require("./TrackCtrl");
-
-var CubeSeqCtrl = function (_React$Component) {
-  _inherits(CubeSeqCtrl, _React$Component);
-
-  function CubeSeqCtrl() {
-    _classCallCheck(this, CubeSeqCtrl);
-
-    return _possibleConstructorReturn(this, (CubeSeqCtrl.__proto__ || Object.getPrototypeOf(CubeSeqCtrl)).apply(this, arguments));
+    return 60 / bpm * (4 / len);
+  },
+  computeFrequenceyFromNoteNumber: function computeFrequenceyFromNoteNumber(m) {
+    return 440 * Math.pow(2, (m - 69) / 12);
   }
+};
 
-  _createClass(CubeSeqCtrl, [{
-    key: "render",
-    value: function render() {
-      return React.createElement(
-        "div",
-        null,
-        React.createElement(MasterCtrl, null),
-        React.createElement(TrackCtrl, null)
-      );
-    }
-  }]);
+},{}],213:[function(require,module,exports){
+"use strict";
 
-  return CubeSeqCtrl;
-}(React.Component);
+function startWebAudioAPI(audioContext) {
+  if (audioContext.currentTime === 0) {
+    (function () {
+      var bufferSource = audioContext.createBufferSource();
 
-module.exports = CubeSeqCtrl;
+      bufferSource.buffer = audioContext.createBuffer(1, 8, audioContext.sampleRate);
+      bufferSource.start(audioContext.currentTime);
+      bufferSource.stop(audioContext.currentTime + bufferSource.buffer.duration);
+      bufferSource.connect(audioContext.destination);
+      bufferSource.onended = function () {
+        bufferSource.disconnect();
+      };
+    })();
+  }
+}
 
-},{"./MasterCtrl":213,"./TrackCtrl":215,"react":187}],213:[function(require,module,exports){
+module.exports = startWebAudioAPI;
+
+},{}],214:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64696,24 +65018,14 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var React = require("react");
-
-var _require = require("react-redux");
-
-var connect = _require.connect;
-
 var nmap = require("nmap");
+var React = require("react");
 var MatrixCtrl = require("./MatrixCtrl");
-var togglePlay = require("../actions/togglePlay");
-var random = require("../actions/random");
-var clear = require("../actions/clear");
-var _changeBPM = require("../actions/changeBPM");
-var _changeTrack = require("../actions/changeTrack");
 
-var _require2 = require("../consts");
+var _require = require("../constants");
 
-var DEFAULT_COLOR = _require2.DEFAULT_COLOR;
-var TRACK_COLORS = _require2.TRACK_COLORS;
+var DEFAULT_COLOR = _require.DEFAULT_COLOR;
+var TRACK_COLORS = _require.TRACK_COLORS;
 
 var MasterCtrl = function (_React$Component) {
   _inherits(MasterCtrl, _React$Component);
@@ -64727,44 +65039,42 @@ var MasterCtrl = function (_React$Component) {
   _createClass(MasterCtrl, [{
     key: "ctrlApp",
     value: function ctrlApp() {
-      var _this2 = this;
+      var actions = this.props.actions;
 
+      var actionList = [actions.togglePlay, actions.random, actions.clear];
       return function (e) {
-        _this2.props.dispatch([togglePlay, random, clear][e.col]());
+        actionList[e.col]();
       };
     }
   }, {
     key: "changeBPM",
     value: function changeBPM() {
-      var _this3 = this;
+      var actions = this.props.actions;
 
       return function (e) {
-        _this3.props.dispatch(_changeBPM(e.col));
+        actions.changeBPM(e.col);
       };
     }
   }, {
     key: "changeTrack",
     value: function changeTrack() {
-      var _this4 = this;
+      var actions = this.props.actions;
 
       return function (e) {
-        _this4.props.dispatch(_changeTrack(e.col));
+        actions.changeTrack(e.col);
       };
     }
   }, {
     key: "render",
     value: function render() {
-      var _props = this.props;
-      var play = _props.play;
-      var bpm = _props.bpm;
-      var track = _props.track;
+      var master = this.props.master;
 
-      var playMat = [[play, 0, 0]];
+      var playMat = [[master.play, 0, 0]];
       var bpmMat = [nmap(3, function (_, i) {
-        return i === bpm ? 1 : 0;
+        return i === master.bpm ? 1 : 0;
       })];
       var axisMat = [TRACK_COLORS.map(function (_, i) {
-        return track === i ? i + 1 : 0;
+        return master.track === i ? i + 1 : 0;
       })];
       var axisColor = DEFAULT_COLOR + ";" + TRACK_COLORS.join(";");
 
@@ -64809,18 +65119,14 @@ var MasterCtrl = function (_React$Component) {
 }(React.Component);
 
 MasterCtrl.propTypes = {
-  dispatch: React.PropTypes.func.isRequired,
-  play: React.PropTypes.number.isRequired,
-  bpm: React.PropTypes.number.isRequired,
-  track: React.PropTypes.number.isRequired
+  actions: React.PropTypes.object.isRequired,
+  master: React.PropTypes.object.isRequired
 };
 
 
-module.exports = connect(function (state) {
-  return state.master;
-})(MasterCtrl);
+module.exports = MasterCtrl;
 
-},{"../actions/changeBPM":205,"../actions/changeTrack":206,"../actions/clear":207,"../actions/random":208,"../actions/togglePlay":210,"../consts":216,"./MatrixCtrl":214,"nmap":34,"react":187,"react-redux":40}],214:[function(require,module,exports){
+},{"../constants":218,"./MatrixCtrl":215,"nmap":34,"react":187}],215:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64951,10 +65257,8 @@ MatrixCtrlCell.propTypes = {
 
 module.exports = MatrixCtrl;
 
-},{"react":187}],215:[function(require,module,exports){
+},{"react":187}],216:[function(require,module,exports){
 "use strict";
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -64966,19 +65270,15 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var React = require("react");
-
-var _require = require("react-redux");
-
-var connect = _require.connect;
-
 var nmap = require("nmap");
+var React = require("react");
 var MatrixCtrl = require("./MatrixCtrl");
-var _updateState = require("../actions/updateState");
-var toggleMatrix = require("../actions/toggleMatrix");
-var pluck2D = require("../utils/pluck2D");
 
-var _require2 = require("../consts");
+var _require = require("../utils/matrix");
+
+var pluck2D = _require.pluck2D;
+
+var _require2 = require("../constants");
 
 var N = _require2.N;
 var DEFAULT_COLOR = _require2.DEFAULT_COLOR;
@@ -64996,50 +65296,46 @@ var TrackCtrl = function (_React$Component) {
   _createClass(TrackCtrl, [{
     key: "updateState",
     value: function updateState(dataType) {
-      var _this2 = this;
+      var _props = this.props;
+      var actions = _props.actions;
+      var track = _props.track;
 
       return function (e) {
-        var track = _this2.props.track;
-        var dataValue = e.col;
-
-        _this2.props.dispatch(_updateState(track, dataType, dataValue));
+        actions.updateState(track, dataType, e.col);
       };
     }
   }, {
     key: "updateMatrix",
     value: function updateMatrix() {
-      var _this3 = this;
+      var _props2 = this.props;
+      var actions = _props2.actions;
+      var track = _props2.track;
+      var state = _props2.state;
 
       return function (e) {
-        var track = _this3.props.track;
-        var scene = _this3.props.scene;
-
-        _this3.props.dispatch(toggleMatrix.apply(undefined, _toConsumableArray(to3DIndex(track, scene, e.row, e.col))));
+        actions.toggleMatrix.apply(actions, _toConsumableArray(to3DIndex(track, state.scene, e.row, e.col)));
       };
     }
   }, {
     key: "render",
     value: function render() {
-      var _props = this.props;
-      var track = _props.track;
-      var pitchShift = _props.pitchShift;
-      var loopLength = _props.loopLength;
-      var noteLength = _props.noteLength;
-      var scene = _props.scene;
+      var _props3 = this.props;
+      var track = _props3.track;
+      var state = _props3.state;
 
       var pitchShiftMat = [nmap(N, function (_, i) {
-        return i === pitchShift ? 1 : 0;
+        return i === state.pitchShift ? 1 : 0;
       })];
       var loopLengthMat = [nmap(N, function (_, i) {
-        return i === loopLength ? 1 : 0;
+        return i === state.loopLength ? 1 : 0;
       })];
       var noteLengthMat = [nmap(N, function (_, i) {
-        return i === noteLength ? 1 : 0;
+        return i === state.noteLength ? 1 : 0;
       })];
       var sceneMat = [nmap(N, function (_, i) {
-        return i === scene ? 1 : 0;
+        return i === state.scene ? 1 : 0;
       })];
-      var matrix = pluck2D(this.props.matrix, track, scene);
+      var matrix = pluck2D(this.props.matrix, track, state.scene);
       var ctrlColor = DEFAULT_COLOR + ";" + TRACK_COLORS[track];
 
       return React.createElement(
@@ -65103,13 +65399,10 @@ var TrackCtrl = function (_React$Component) {
 }(React.Component);
 
 TrackCtrl.propTypes = {
-  dispatch: React.PropTypes.func.isRequired,
+  actions: React.PropTypes.object.isRequired,
   matrix: React.PropTypes.array.isRequired,
   track: React.PropTypes.number.isRequired,
-  pitchShift: React.PropTypes.number.isRequired,
-  loopLength: React.PropTypes.number.isRequired,
-  noteLength: React.PropTypes.number.isRequired,
-  scene: React.PropTypes.number.isRequired
+  state: React.PropTypes.object.isRequired
 };
 
 
@@ -65124,11 +65417,22 @@ function to3DIndex(track, scene, row, col) {
   }
 }
 
-module.exports = connect(function (state) {
-  return _extends({ track: state.master.track }, state.track[state.master.track], { matrix: state.matrix });
-})(TrackCtrl);
+module.exports = TrackCtrl;
 
-},{"../actions/toggleMatrix":209,"../actions/updateState":211,"../consts":216,"../utils/pluck2D":234,"./MatrixCtrl":214,"nmap":34,"react":187,"react-redux":40}],216:[function(require,module,exports){
+},{"../constants":218,"../utils/matrix":225,"./MatrixCtrl":215,"nmap":34,"react":187}],217:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  CHANGE_BPM: "CHANGE_BPM",
+  CHANGE_TRACK: "CHANGE_TRACK",
+  CLEAR: "CLEAR",
+  RANDOM: "RANDOM",
+  TOGGLE_MATRIX: "TOGGLE_MATRIX",
+  TOGGLE_PLAY: "TOGGLE_PLAY",
+  UPDATE_STATE: "UPDATE_STATE"
+};
+
+},{}],218:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65137,7 +65441,82 @@ module.exports = {
   TRACK_COLORS: ["#e74c3c", "#2ecc71", "#3498db"]
 };
 
-},{}],217:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var React = require("react");
+
+var _require = require("redux");
+
+var bindActionCreators = _require.bindActionCreators;
+
+var _require2 = require("react-redux");
+
+var connect = _require2.connect;
+
+var MasterCtrl = require("../components/MasterCtrl");
+var TrackCtrl = require("../components/TrackCtrl");
+var actions = require("../actions");
+
+var App = function (_React$Component) {
+  _inherits(App, _React$Component);
+
+  function App() {
+    _classCallCheck(this, App);
+
+    return _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).apply(this, arguments));
+  }
+
+  _createClass(App, [{
+    key: "render",
+    value: function render() {
+      var _props = this.props;
+      var actions = _props.actions;
+      var master = _props.master;
+      var matrix = _props.matrix;
+      var track = _props.track;
+
+      return React.createElement(
+        "div",
+        null,
+        React.createElement(MasterCtrl, { actions: actions, master: master }),
+        React.createElement(TrackCtrl, { actions: actions, track: master.track, state: track[master.track], matrix: matrix })
+      );
+    }
+  }]);
+
+  return App;
+}(React.Component);
+
+App.propTypes = {
+  actions: React.PropTypes.object.isRequired,
+  master: React.PropTypes.object.isRequired,
+  matrix: React.PropTypes.array.isRequired,
+  track: React.PropTypes.array.isRequired
+};
+
+
+function mapStateToProps(state) {
+  return state;
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    actions: bindActionCreators(actions, dispatch)
+  };
+}
+
+module.exports = connect(mapStateToProps, mapDispatchToProps)(App);
+
+},{"../actions":204,"../components/MasterCtrl":214,"../components/TrackCtrl":216,"react":187,"react-redux":40,"redux":193}],220:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
@@ -65148,9 +65527,9 @@ var _require = require("react-redux");
 
 var Provider = _require.Provider;
 
-var CubeSeqCtrl = require("./components/CubeSeqCtrl");
+var App = require("./containers/App");
 var Viewer = require("./viewer/Viewer");
-var Sequencer = require("./sequencer/Sequencer");
+var Sequencer = require("./audio/Sequencer");
 var app = require("./reducers");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -65185,11 +65564,11 @@ window.addEventListener("DOMContentLoaded", function () {
   ReactDom.render(React.createElement(
     Provider,
     { store: store },
-    React.createElement(CubeSeqCtrl, null)
+    React.createElement(App, null)
   ), document.getElementById("app"));
 });
 
-},{"./components/CubeSeqCtrl":212,"./reducers":218,"./sequencer/Sequencer":222,"./viewer/Viewer":236,"react":187,"react-dom":37,"react-redux":40,"redux":193}],218:[function(require,module,exports){
+},{"./audio/Sequencer":205,"./containers/App":219,"./reducers":221,"./viewer/Viewer":227,"react":187,"react-dom":37,"react-redux":40,"redux":193}],221:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65203,17 +65582,22 @@ module.exports = redux.combineReducers({
   matrix: matrix
 });
 
-},{"./master":219,"./matrix":220,"./track":221,"redux":193}],219:[function(require,module,exports){
+},{"./master":222,"./matrix":223,"./track":224,"redux":193}],222:[function(require,module,exports){
 "use strict";
 
-var irand = require("../utils/irand");
+var types = require("../constants/ActionTypes");
+
+var _require = require("../utils/random");
+
+var irand = _require.irand;
+
 
 module.exports = {
   play: function play() {
     var state = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
     var action = arguments[1];
 
-    if (action.type === "TOGGLE_PLAY") {
+    if (action.type === types.TOGGLE_PLAY) {
       return 1 - state;
     }
     return state;
@@ -65222,10 +65606,10 @@ module.exports = {
     var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
     var action = arguments[1];
 
-    if (action.type === "CHANGE_BPM") {
+    if (action.type === types.CHANGE_BPM) {
       return action.bpm;
     }
-    if (action.type === "RANDOM") {
+    if (action.type === types.RANDOM) {
       return irand(3);
     }
     return state;
@@ -65234,25 +65618,29 @@ module.exports = {
     var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
     var action = arguments[1];
 
-    if (action.type === "CHANGE_TRACK") {
+    if (action.type === types.CHANGE_TRACK) {
       return action.track;
     }
-    if (action.type === "RANDOM") {
+    if (action.type === types.RANDOM) {
       return irand(3);
     }
     return state;
   }
 };
 
-},{"../utils/irand":232}],220:[function(require,module,exports){
+},{"../constants/ActionTypes":217,"../utils/random":226}],223:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
-var coin = require("../utils/coin");
+var types = require("../constants/ActionTypes");
 
-var _require = require("../consts");
+var _require = require("../utils/random");
 
-var N = _require.N;
+var coin = _require.coin;
+
+var _require2 = require("../constants");
+
+var N = _require2.N;
 
 
 var rand = function rand() {
@@ -65270,15 +65658,15 @@ module.exports = function () {
   var state = arguments.length <= 0 || arguments[0] === undefined ? createMatrix(rand) : arguments[0];
   var action = arguments[1];
 
-  if (action.type === "TOGGLE_MATRIX") {
+  if (action.type === types.TOGGLE_MATRIX) {
     state = JSON.parse(JSON.stringify(state));
     state[action.i][action.j][action.k] = 1 - state[action.i][action.j][action.k];
     return state;
   }
-  if (action.type === "RANDOM") {
+  if (action.type === types.RANDOM) {
     return createMatrix(rand);
   }
-  if (action.type === "CLEAR") {
+  if (action.type === types.CLEAR) {
     return createMatrix(function () {
       return 0;
     });
@@ -65286,19 +65674,23 @@ module.exports = function () {
   return state;
 };
 
-},{"../consts":216,"../utils/coin":230,"nmap":34}],221:[function(require,module,exports){
+},{"../constants":218,"../constants/ActionTypes":217,"../utils/random":226,"nmap":34}],224:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var irand = require("../utils/irand");
-var sample = require("../utils/sample");
+var types = require("../constants/ActionTypes");
 
-var _require = require("../consts");
+var _require = require("../utils/random");
 
-var N = _require.N;
+var irand = _require.irand;
+var sample = _require.sample;
+
+var _require2 = require("../constants");
+
+var N = _require2.N;
 
 
 var pitchShift = [[1, 2, 2, 3], [0, 2, 4, 6], [5, 6, 7, 7]];
@@ -65313,495 +65705,78 @@ module.exports = function () {
   var state = arguments.length <= 0 || arguments[0] === undefined ? initTrackState : arguments[0];
   var action = arguments[1];
 
-  if (action.type === "UPDATE_STATE") {
+  if (action.type === types.UPDATE_STATE) {
     state = JSON.parse(JSON.stringify(state));
     state[action.track] = _extends({}, state[action.track], _defineProperty({}, action.dataType, action.dataValue));
     return state;
   }
-  if (action.type === "RANDOM") {
+  if (action.type === types.RANDOM) {
     return [0, 1, 2].map(randomState);
   }
   return state;
 };
 
-},{"../consts":216,"../utils/irand":232,"../utils/sample":235}],222:[function(require,module,exports){
-"use strict";
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var events = require("events");
-var nmap = require("nmap");
-var WebAudioScheduler = require("web-audio-scheduler");
-var WorkerTimer = require("worker-timer");
-var Track = require("./Track");
-var sounds = require("./sounds");
-var createReverbBuffer = require("./createReverbBuffer");
-var startWebAudioAPI = require("./startWebAudioAPI");
-var pluck2D = require("../utils/pluck2D");
-var computeDurationFromBPM = require("../utils/computeDurationFromBPM");
-
-var _require = require("../consts");
-
-var N = _require.N;
-
-
-var BPM_MAP = [120, 140, 160];
-
-var Sequencer = function (_events$EventEmitter) {
-  _inherits(Sequencer, _events$EventEmitter);
-
-  function Sequencer(audioContext) {
-    _classCallCheck(this, Sequencer);
-
-    var _this = _possibleConstructorReturn(this, (Sequencer.__proto__ || Object.getPrototypeOf(Sequencer)).call(this));
-
-    _this.bpm = 140;
-    _this.audioContext = audioContext;
-
-    _this.convolver = _this.audioContext.createConvolver();
-    _this.convolver.buffer = createReverbBuffer(_this.audioContext);
-    _this.convolver.connect(_this.audioContext.destination);
-
-    _this.sched = new WebAudioScheduler({ context: _this.audioContext, timerAPI: WorkerTimer });
-    _this.tracks = nmap(3, function (_, i) {
-      return new Track(_this.convolver, sounds[i]);
-    });
-
-    _this.tracks.forEach(function (track, i) {
-      track.on("tick", function (data) {
-        _this.emit("tick", _extends({}, data, { track: i }));
-      });
-    });
-
-    _this.sequence = _this.sequence.bind(_this);
-    return _this;
-  }
-
-  _createClass(Sequencer, [{
-    key: "update",
-    value: function update(state) {
-      var _this2 = this;
-
-      this.bpm = BPM_MAP[state.master.bpm];
-
-      this.tracks.forEach(function (track, i) {
-        var _state = state.track[i];
-        var matrix = rotate(pluck2D(state.matrix, i, _state.scene));
-
-        track.update(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
-      });
-
-      this.play(state.master.play);
-    }
-  }, {
-    key: "play",
-    value: function play() {
-      var value = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
-
-      startWebAudioAPI(this.audioContext);
-      if (this.sched.state === "suspended" && value === 1) {
-        this.sched.start(this.sequence);
-      }
-      if (this.sched.state === "running" && value === 0) {
-        this.sched.stop(true);
-      }
-    }
-  }, {
-    key: "sequence",
-    value: function sequence(e) {
-      var t0 = e.playbackTime;
-      var t1 = t0 + computeDurationFromBPM(this.bpm, 32);
-
-      this.tracks.forEach(function (track) {
-        track.sequence(e);
-      });
-
-      this.sched.insert(t1, this.sequence);
-    }
-  }]);
-
-  return Sequencer;
-}(events.EventEmitter);
-
-function rotate(matrix) {
-  return nmap(N, function (_, i) {
-    return nmap(N, function (_, j) {
-      return matrix[j][i];
-    });
-  });
-}
-
-module.exports = Sequencer;
-
-},{"../consts":216,"../utils/computeDurationFromBPM":231,"../utils/pluck2D":234,"./Track":223,"./createReverbBuffer":224,"./sounds":227,"./startWebAudioAPI":229,"events":1,"nmap":34,"web-audio-scheduler":199,"worker-timer":204}],223:[function(require,module,exports){
-"use strict";
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var events = require("events");
-var nmap = require("nmap");
-var computeDurationFromBPM = require("../utils/computeDurationFromBPM");
-
-var _require = require("../consts");
-
-var N = _require.N;
-
-
-var NOTE_NUMBERS = [52, 57, 60, 62, 64, 65, 69, 72, 76, 79, 81, 83, 84, 86, 88];
-var NOTE_LENGTHS = [1, 2, 3, 4, 5, 6, 7, 8];
-var NOTE_INTERVALS = [32, 16, 12, 8, 7, 6, 5, 4];
-
-var Track = function (_events$EventEmitter) {
-  _inherits(Track, _events$EventEmitter);
-
-  function Track(destination, instrument) {
-    _classCallCheck(this, Track);
-
-    var _this = _possibleConstructorReturn(this, (Track.__proto__ || Object.getPrototypeOf(Track)).call(this));
-
-    _this.audioContext = destination.context;
-    _this.destination = destination;
-    _this.instrument = instrument;
-    _this.bpm = 0;
-    _this.pitchShift = 0;
-    _this.loopLength = 0;
-    _this.noteLength = 0;
-    _this.matrix = nmap(N, function () {
-      return nmap(N, function () {
-        return 0;
-      });
-    });
-
-    _this.index = 0;
-    _this.counter = 0;
-    return _this;
-  }
-
-  _createClass(Track, [{
-    key: "update",
-    value: function update(state) {
-      this.bpm = state.bpm;
-      this.matrix = state.matrix;
-      this.pitchShift = state.pitchShift;
-      this.loopLength = state.loopLength;
-      this.noteLength = state.noteLength;
-    }
-  }, {
-    key: "sequence",
-    value: function sequence(e) {
-      var _this2 = this;
-
-      var playbackTime = e.playbackTime;
-
-      this.counter -= 1;
-
-      if (0 < this.counter) {
-        return;
-      }
-
-      var index = this.index % (this.loopLength + 1);
-      var counter = NOTE_INTERVALS[this.noteLength];
-
-      this.matrix[index].forEach(function (value, index) {
-        if (value !== 0) {
-          var noteNumber = NOTE_NUMBERS[N - 1 - index + _this2.pitchShift];
-          var duration = computeDurationFromBPM(_this2.bpm, NOTE_LENGTHS[_this2.noteLength]);
-
-          _this2.instrument(_this2.destination, playbackTime, noteNumber, duration);
-        }
-      });
-
-      this.index += 1;
-      this.counter = counter;
-
-      this.emit("tick", { playbackTime: playbackTime, index: index });
-    }
-  }]);
-
-  return Track;
-}(events.EventEmitter);
-
-module.exports = Track;
-
-},{"../consts":216,"../utils/computeDurationFromBPM":231,"events":1,"nmap":34}],224:[function(require,module,exports){
-"use strict";
-
-function createReverb(len) {
-  var data = new Float32Array(len);
-
-  for (var i = 0; i < len; i++) {
-    data[i] = Math.random() * 2 - 1;
-    data[i] *= Math.pow(2, -i / 80);
-  }
-
-  return data;
-}
-
-function createReverbBuffer(audioContext) {
-  var data = [createReverb(16384)];
-  var buffer = audioContext.createBuffer(data.length, data[0].length, audioContext.sampleRate);
-
-  data.forEach(function (data, ch) {
-    buffer.getChannelData(ch).set(data);
-  });
-
-  return buffer;
-}
-
-module.exports = createReverbBuffer;
-
-},{}],225:[function(require,module,exports){
-"use strict";
-
-var mtof = require("../../utils/mtof");
-
-function beep(destination, playbackTime, noteNumber, duration) {
-  var t0 = playbackTime;
-  var t1 = t0 + duration * 0.25;
-  var freq = mtof(noteNumber);
-  var audioContext = destination.context;
-  var oscillator = audioContext.createOscillator();
-  var gain = audioContext.createGain();
-
-  oscillator.frequency.value = freq * 2;
-  oscillator.start(t0);
-  oscillator.stop(t1);
-  oscillator.connect(gain);
-  oscillator.onended = function () {
-    oscillator.disconnect();
-    gain.disconnect();
-  };
-
-  gain.gain.value = 0.3;
-  gain.connect(destination);
-}
-
-module.exports = beep;
-
-},{"../../utils/mtof":233}],226:[function(require,module,exports){
-"use strict";
-
-var mtof = require("../../utils/mtof");
-
-function epiano(destination, playbackTime, noteNumber, duration) {
-  var t0 = playbackTime;
-  var t1 = t0 + duration * 0.2;
-  var t2 = t1 + duration * 1.0;
-  var t3 = t2 + duration * 0.5;
-  var freq = mtof(noteNumber);
-  var audioContext = destination.context;
-  var oscillator1 = audioContext.createOscillator();
-  var oscillator2 = audioContext.createOscillator();
-  var oscillator3 = audioContext.createOscillator();
-  var gain1 = audioContext.createGain();
-  var gain2 = audioContext.createGain();
-
-  oscillator1.frequency.value = freq;
-  oscillator1.detune.value = +4;
-  oscillator1.start(t0);
-  oscillator1.stop(t3);
-  oscillator1.connect(gain1);
-  oscillator1.onended = function () {
-    oscillator1.disconnect();
-    oscillator2.disconnect();
-    oscillator3.disconnect();
-    gain1.disconnect();
-    gain2.disconnect();
-  };
-
-  oscillator2.frequency.value = freq;
-  oscillator2.detune.value = -4;
-  oscillator2.start(t0);
-  oscillator2.stop(t3);
-  oscillator2.connect(gain1);
-
-  oscillator3.frequency.value = freq * 6;
-  oscillator3.start(t0);
-  oscillator3.stop(t3);
-  oscillator3.connect(gain2);
-
-  gain1.gain.setValueAtTime(0.4, t0);
-  gain1.gain.setValueAtTime(0.4, t1);
-  gain1.gain.linearRampToValueAtTime(0, t3);
-  gain1.connect(destination);
-
-  gain2.gain.setValueAtTime(freq * 2, t0);
-  gain2.gain.setValueAtTime(freq * 2, t1);
-  gain2.gain.linearRampToValueAtTime(freq * 0.5, t2);
-  gain2.connect(oscillator1.frequency);
-  gain2.connect(oscillator2.frequency);
-}
-
-module.exports = epiano;
-
-},{"../../utils/mtof":233}],227:[function(require,module,exports){
-"use strict";
-
-module.exports = [require("./epiano"), require("./pad"), require("./beep")];
-
-},{"./beep":225,"./epiano":226,"./pad":228}],228:[function(require,module,exports){
-"use strict";
-
-var mtof = require("../../utils/mtof");
-
-function pad(destination, playbackTime, noteNumber, duration) {
-  var t0 = playbackTime;
-  var t1 = t0 + duration * 0.2;
-  var t2 = t1 + duration * 0.8;
-  var t3 = t2 + duration;
-  var freq = mtof(noteNumber);
-  var audioContext = destination.context;
-  var oscillator1 = audioContext.createOscillator();
-  var oscillator2 = audioContext.createOscillator();
-  var gain = audioContext.createGain();
-
-  oscillator1.frequency.value = freq;
-  oscillator1.detune.setValueAtTime(0.5, t0);
-  oscillator1.detune.linearRampToValueAtTime(8, t2);
-  oscillator1.start(t0);
-  oscillator1.stop(t3);
-  oscillator1.connect(gain);
-
-  oscillator2.frequency.value = freq;
-  oscillator2.detune.setValueAtTime(-0.5, t0);
-  oscillator2.detune.linearRampToValueAtTime(-8, t2);
-  oscillator2.start(t0);
-  oscillator2.stop(t3);
-  oscillator2.connect(gain);
-
-  oscillator1.onended = function () {
-    oscillator1.disconnect();
-    oscillator2.disconnect();
-    gain.disconnect();
-  };
-
-  gain.gain.setValueAtTime(0, t0);
-  gain.gain.linearRampToValueAtTime(0.6, t1);
-  gain.gain.setValueAtTime(0.6, t2);
-  gain.gain.linearRampToValueAtTime(0, t3);
-  gain.connect(destination);
-}
-
-module.exports = pad;
-
-},{"../../utils/mtof":233}],229:[function(require,module,exports){
-"use strict";
-
-function startWebAudioAPI(audioContext) {
-  if (audioContext.currentTime !== 0) {
-    return;
-  }
-
-  var bufferSource = audioContext.createBufferSource();
-
-  bufferSource.buffer = audioContext.createBuffer(1, 8, audioContext.sampleRate);
-  bufferSource.start(audioContext.currentTime);
-  bufferSource.stop(audioContext.currentTime + bufferSource.buffer.duration);
-  bufferSource.connect(audioContext.destination);
-  bufferSource.onended = function () {
-    bufferSource.disconnect();
-  };
-}
-
-module.exports = startWebAudioAPI;
-
-},{}],230:[function(require,module,exports){
-"use strict";
-
-function coin(x) {
-  return Math.random() < x ? 1 : 0;
-}
-
-module.exports = coin;
-
-},{}],231:[function(require,module,exports){
-"use strict";
-
-function computeDurationFromBPM(bpm) {
-  var len = arguments.length <= 1 || arguments[1] === undefined ? 4 : arguments[1];
-
-  return 60 / bpm * (4 / len);
-}
-
-module.exports = computeDurationFromBPM;
-
-},{}],232:[function(require,module,exports){
-"use strict";
-
-function irand(x) {
-  return Math.floor(Math.random() * x);
-}
-
-module.exports = irand;
-
-},{}],233:[function(require,module,exports){
-"use strict";
-
-function mtof(m) {
-  return 440 * Math.pow(2, (m - 69) / 12);
-}
-
-module.exports = mtof;
-
-},{}],234:[function(require,module,exports){
+},{"../constants":218,"../constants/ActionTypes":217,"../utils/random":226}],225:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
 
-var _require = require("../consts");
+var _require = require("../constants");
 
 var N = _require.N;
 
 
-function pluck2D(matrix, axis, $) {
-  switch (axis) {
-    case 0:
-      return nmap(N, function (_, i) {
-        return nmap(N, function (_, j) {
-          return matrix[$][i][j];
+module.exports = {
+  pluck2D: function pluck2D(matrix, axis, $) {
+    switch (axis) {
+      case 0:
+        return nmap(N, function (_, i) {
+          return nmap(N, function (_, j) {
+            return matrix[$][i][j];
+          });
         });
-      });
-    case 1:
-      return nmap(N, function (_, i) {
-        return nmap(N, function (_, j) {
-          return matrix[j][$][i];
+      case 1:
+        return nmap(N, function (_, i) {
+          return nmap(N, function (_, j) {
+            return matrix[j][$][i];
+          });
         });
-      });
-    case 2:
-      return nmap(N, function (_, i) {
-        return nmap(N, function (_, j) {
-          return matrix[i][j][$];
+      case 2:
+        return nmap(N, function (_, i) {
+          return nmap(N, function (_, j) {
+            return matrix[i][j][$];
+          });
         });
+    }
+  },
+  rotate: function rotate(matrix) {
+    return nmap(N, function (_, i) {
+      return nmap(N, function (_, j) {
+        return matrix[j][i];
       });
+    });
   }
-}
+};
 
-module.exports = pluck2D;
-
-},{"../consts":216,"nmap":34}],235:[function(require,module,exports){
+},{"../constants":218,"nmap":34}],226:[function(require,module,exports){
 "use strict";
 
-function sample(list) {
-  return list[Math.floor(Math.random() * list.length)];
-}
+module.exports = {
+  coin: function coin(x) {
+    return Math.random() < x ? 1 : 0;
+  },
+  irand: function irand(x) {
+    return Math.floor(Math.random() * x);
+  },
+  rand2: function rand2(x) {
+    return (Math.random() * 2 - 1) * x;
+  },
+  sample: function sample(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+};
 
-module.exports = sample;
-
-},{}],236:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65811,7 +65786,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var THREE = require("three");
 var nmap = require("nmap");
 
-var _require = require("../consts");
+var _require = require("../constants");
 
 var N = _require.N;
 var TRACK_COLORS = _require.TRACK_COLORS;
@@ -65849,8 +65824,8 @@ var Viewer = function () {
     this.scene.add(this.group);
 
     this.camera = new THREE.PerspectiveCamera(60, 1, 1, 5000);
-    this.camera.position.y = Math.cos(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000; // 1500;
-    this.camera.position.z = Math.sin(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000; // 2600;
+    this.camera.position.y = Math.cos(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000;
+    this.camera.position.z = Math.sin(VIEW_ANGLE / 180 * 2 * Math.PI) * 3000;
     this.camera.lookAt({ x: 0, y: 0, z: 0 });
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -66017,4 +65992,4 @@ function pluckRow(matrix, state, axis, index) {
 
 module.exports = Viewer;
 
-},{"../consts":216,"nmap":34,"three":198}]},{},[217]);
+},{"../constants":218,"nmap":34,"three":197}]},{},[220]);

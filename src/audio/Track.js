@@ -2,8 +2,8 @@
 
 const events = require("events");
 const nmap = require("nmap");
-const computeDurationFromBPM = require("../utils/computeDurationFromBPM");
-const { N } = require("../consts");
+const { computeDurationFromBPM } = require("./utils");
+const { N } = require("../constants");
 
 const NOTE_NUMBERS = [ 52, 57, 60, 62, 64, 65, 69, 72, 76, 79, 81, 83, 84, 86, 88  ];
 const NOTE_LENGTHS   = [ 1, 2, 3, 4, 5, 6, 7, 8 ];

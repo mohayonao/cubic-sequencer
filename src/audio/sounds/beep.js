@@ -1,11 +1,11 @@
 "use strict";
 
-const mtof = require("../../utils/mtof");
+const { computeFrequenceyFromNoteNumber } = require("../utils");
 
 function beep(destination, playbackTime, noteNumber, duration) {
   const t0 = playbackTime;
   const t1 = t0 + duration * 0.25;
-  const freq = mtof(noteNumber);
+  const freq = computeFrequenceyFromNoteNumber(noteNumber);
   const audioContext = destination.context;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();

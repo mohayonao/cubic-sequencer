@@ -1,47 +1,43 @@
 "use strict";
 
-const React = require("react");
-const { connect } = require("react-redux");
 const nmap = require("nmap");
+const React = require("react");
 const MatrixCtrl = require("./MatrixCtrl");
-const togglePlay = require("../actions/togglePlay");
-const random = require("../actions/random");
-const clear = require("../actions/clear");
-const changeBPM = require("../actions/changeBPM");
-const changeTrack = require("../actions/changeTrack");
-const { DEFAULT_COLOR, TRACK_COLORS } = require("../consts");
+const { DEFAULT_COLOR, TRACK_COLORS } = require("../constants");
 
 class MasterCtrl extends React.Component {
   static propTypes = {
-    dispatch: React.PropTypes.func.isRequired,
-    play: React.PropTypes.number.isRequired,
-    bpm: React.PropTypes.number.isRequired,
-    track: React.PropTypes.number.isRequired
+    actions: React.PropTypes.object.isRequired,
+    master : React.PropTypes.object.isRequired,
   };
 
   ctrlApp() {
+    const { actions } = this.props;
+    const actionList = [ actions.togglePlay, actions.random, actions.clear ];
     return (e) => {
-      this.props.dispatch([ togglePlay, random, clear ][e.col]());
+      actionList[e.col]();
     };
   }
 
   changeBPM() {
+    const { actions } = this.props;
     return (e) => {
-      this.props.dispatch(changeBPM(e.col));
+      actions.changeBPM(e.col);
     };
   }
 
   changeTrack() {
+    const { actions } = this.props;
     return (e) => {
-      this.props.dispatch(changeTrack(e.col));
+      actions.changeTrack(e.col);
     };
   }
 
   render() {
-    const { play, bpm, track } = this.props;
-    const playMat = [ [ play, 0, 0 ] ] ;
-    const bpmMat = [ nmap(3, (_, i) => i === bpm ? 1 : 0) ];
-    const axisMat = [ TRACK_COLORS.map((_, i) => track === i ? (i + 1) : 0) ];
+    const { master } = this.props;
+    const playMat = [ [ master.play, 0, 0 ] ] ;
+    const bpmMat = [ nmap(3, (_, i) => i === master.bpm ? 1 : 0) ];
+    const axisMat = [ TRACK_COLORS.map((_, i) => master.track === i ? (i + 1) : 0) ];
     const axisColor = `${ DEFAULT_COLOR };${ TRACK_COLORS.join(";") }`;
 
     return (
@@ -63,4 +59,4 @@ class MasterCtrl extends React.Component {
   }
 }
 
-module.exports = connect(state => state.master)(MasterCtrl);
+module.exports = MasterCtrl;
