@@ -16,7 +16,6 @@ const { N } = require("../consts");
 
 const defaultColor = "#ecf0f1";
 
-@connect(state => state)
 class CubeSeqCtrl extends React.Component {
   static propTypes = {
     dispatch: React.PropTypes.func.isRequired,
@@ -123,4 +122,4 @@ function to3DIndex(track, scene, row, col) {
   }
 }
 
-module.exports = CubeSeqCtrl;
+module.exports = connect(state => state)(CubeSeqCtrl);
