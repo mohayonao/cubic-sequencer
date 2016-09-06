@@ -12,8 +12,10 @@
     "react-dom": "^15.3.1",
     "react-redux": "^4.4.5",
     "redux": "^3.5.2",
+    "request-midi-access": "^1.0.0",
     "three": "^0.80.1",
     "web-audio-scheduler": "^1.3.0",
+    "web-midi-emitter": "^0.4.0",
     "worker-timer": "^1.1.0"
   },
   "devDependencies": {

@@ -46,7 +46,6 @@ class TrackCtrl extends React.Component {
   }
 }
 
-
 function to3DIndex(track, scene, row, col) {
   switch (track) {
   case 0: return [ scene, row, col];

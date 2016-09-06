@@ -22448,7 +22448,7 @@ function createStore(reducer, initialState, enhancer) {
     replaceReducer: replaceReducer
   }, _ref2[_symbolObservable2["default"]] = observable, _ref2;
 }
-},{"lodash/isPlainObject":33,"symbol-observable":195}],193:[function(require,module,exports){
+},{"lodash/isPlainObject":33,"symbol-observable":196}],193:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -22525,13 +22525,30 @@ function warning(message) {
 }
 },{}],195:[function(require,module,exports){
 (function (global){
+"use strict";
+
+var window = global.window || {};
+
+function requestMIDIAccess(opts) {
+  opts = opts || {};
+  if (window.navigator && typeof window.navigator.requestMIDIAccess === "function") {
+    return window.navigator.requestMIDIAccess(opts);
+  }
+  return Promise.reject(new TypeError("Web MIDI API is not supported"));
+}
+
+module.exports = requestMIDIAccess;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],196:[function(require,module,exports){
+(function (global){
 /* global window */
 'use strict';
 
 module.exports = require('./ponyfill')(global || window || this);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill":196}],196:[function(require,module,exports){
+},{"./ponyfill":197}],197:[function(require,module,exports){
 'use strict';
 
 module.exports = function symbolObservablePonyfill(root) {
@@ -22552,7 +22569,7 @@ module.exports = function symbolObservablePonyfill(root) {
 	return result;
 };
 
-},{}],197:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -64289,10 +64306,10 @@ module.exports = function symbolObservablePonyfill(root) {
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-},{}],198:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 module.exports = require("./lib");
 
-},{"./lib":201}],199:[function(require,module,exports){
+},{"./lib":202}],200:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64471,7 +64488,7 @@ var WebAudioScheduler = function (_events$EventEmitter) {
 
 module.exports = WebAudioScheduler;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaultContext":200,"./utils/defaults":202,"events":1}],200:[function(require,module,exports){
+},{"./defaultContext":201,"./utils/defaults":203,"events":1}],201:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -64479,11 +64496,11 @@ module.exports = {
     return Date.now() / 1000;
   }
 };
-},{}],201:[function(require,module,exports){
+},{}],202:[function(require,module,exports){
 "use strict";
 
 module.exports = require("./WebAudioScheduler");
-},{"./WebAudioScheduler":199}],202:[function(require,module,exports){
+},{"./WebAudioScheduler":200}],203:[function(require,module,exports){
 "use strict";
 
 function defaults(value, defaultValue) {
@@ -64491,7 +64508,96 @@ function defaults(value, defaultValue) {
 }
 
 module.exports = defaults;
-},{}],203:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var events = require("events");
+
+var WebMIDIEmitter = function (_events$EventEmitter) {
+  _inherits(WebMIDIEmitter, _events$EventEmitter);
+
+  function WebMIDIEmitter(access, deviceNameMatcher) {
+    _classCallCheck(this, WebMIDIEmitter);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WebMIDIEmitter).call(this));
+
+    _this.access = access;
+    _this.input = null;
+    _this.output = null;
+
+    _this._setupInputPort(deviceNameMatcher);
+    _this._setupOutputPort(deviceNameMatcher);
+
+    _this.access.addEventListener("statechange", function (e) {
+      if (_this.input === null) {
+        _this._setupInputPort(deviceNameMatcher);
+      }
+      if (_this.output === null) {
+        _this._setupOutputPort(deviceNameMatcher);
+      }
+      if (e.port === _this.input || e.port === _this.output) {
+        _this.emit("statechange", e);
+      }
+    });
+    return _this;
+  }
+
+  _createClass(WebMIDIEmitter, [{
+    key: "send",
+    value: function send() {
+      if (this.output) {
+        var _output;
+
+        (_output = this.output).send.apply(_output, arguments);
+      }
+    }
+  }, {
+    key: "clear",
+    value: function clear() {
+      if (this.output) {
+        this.output.clear();
+      }
+    }
+  }, {
+    key: "_setupInputPort",
+    value: function _setupInputPort(deviceNameMatcher) {
+      var _this2 = this;
+
+      this.input = getPort(this.access.inputs, deviceNameMatcher);
+      if (this.input !== null) {
+        this.input.onmidimessage = function (e) {
+          _this2.emit("midimessage", e);
+        };
+      }
+      return this.input;
+    }
+  }, {
+    key: "_setupOutputPort",
+    value: function _setupOutputPort(deviceNameMatcher) {
+      this.output = getPort(this.access.outputs, deviceNameMatcher);
+      return this.output;
+    }
+  }]);
+
+  return WebMIDIEmitter;
+}(events.EventEmitter);
+
+function getPort(map, deviceNameMatcher) {
+  return Array.from(map.values()).filter(function (device) {
+    return !!device.name.match(deviceNameMatcher);
+  })[0] || null;
+}
+
+module.exports = WebMIDIEmitter;
+},{"events":1}],205:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64562,7 +64668,7 @@ if (global === global.window && global.URL && global.Blob && global.Worker) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],204:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -64594,7 +64700,7 @@ module.exports = {
   }
 };
 
-},{"../constants/ActionTypes":218}],205:[function(require,module,exports){
+},{"../constants/ActionTypes":220}],207:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -64707,7 +64813,7 @@ var Sequencer = function (_events$EventEmitter) {
 
 module.exports = Sequencer;
 
-},{"../constants":219,"../utils/matrix":228,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
+},{"../constants":221,"../utils/matrix":231,"./Track":208,"./sounds":211,"./utils":214,"./utils/createReverbBuffer":213,"./utils/startWebAudioAPI":215,"events":1,"nmap":34,"web-audio-scheduler":199,"worker-timer":205}],208:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64806,7 +64912,7 @@ var Track = function (_events$EventEmitter) {
 
 module.exports = Track;
 
-},{"../constants":219,"./utils":212,"events":1,"nmap":34}],207:[function(require,module,exports){
+},{"../constants":221,"./utils":214,"events":1,"nmap":34}],209:[function(require,module,exports){
 "use strict";
 
 var _require = require("../utils");
@@ -64837,7 +64943,7 @@ function beep(destination, playbackTime, noteNumber, duration) {
 
 module.exports = beep;
 
-},{"../utils":212}],208:[function(require,module,exports){
+},{"../utils":214}],210:[function(require,module,exports){
 "use strict";
 
 var _require = require("../utils");
@@ -64896,12 +65002,12 @@ function epiano(destination, playbackTime, noteNumber, duration) {
 
 module.exports = epiano;
 
-},{"../utils":212}],209:[function(require,module,exports){
+},{"../utils":214}],211:[function(require,module,exports){
 "use strict";
 
 module.exports = [require("./epiano"), require("./pad"), require("./beep")];
 
-},{"./beep":207,"./epiano":208,"./pad":210}],210:[function(require,module,exports){
+},{"./beep":209,"./epiano":210,"./pad":212}],212:[function(require,module,exports){
 "use strict";
 
 var _require = require("../utils");
@@ -64949,7 +65055,7 @@ function pad(destination, playbackTime, noteNumber, duration) {
 
 module.exports = pad;
 
-},{"../utils":212}],211:[function(require,module,exports){
+},{"../utils":214}],213:[function(require,module,exports){
 "use strict";
 
 function createReverb(len) {
@@ -64976,7 +65082,7 @@ function createReverbBuffer(audioContext) {
 
 module.exports = createReverbBuffer;
 
-},{}],212:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -64990,7 +65096,7 @@ module.exports = {
   }
 };
 
-},{}],213:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 "use strict";
 
 function startWebAudioAPI(audioContext) {
@@ -65011,7 +65117,7 @@ function startWebAudioAPI(audioContext) {
 
 module.exports = startWebAudioAPI;
 
-},{}],214:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65070,7 +65176,7 @@ LabeledMatrixCtrl.propTypes = {
 
 module.exports = LabeledMatrixCtrl;
 
-},{"./MatrixCtrl":216,"react":187}],215:[function(require,module,exports){
+},{"./MatrixCtrl":218,"react":187}],217:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65162,7 +65268,7 @@ MasterCtrl.propTypes = {
 
 module.exports = MasterCtrl;
 
-},{"../constants":219,"./LabeledMatrixCtrl":214,"react":187}],216:[function(require,module,exports){
+},{"../constants":221,"./LabeledMatrixCtrl":216,"react":187}],218:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65293,7 +65399,7 @@ MatrixCtrlCell.propTypes = {
 
 module.exports = MatrixCtrl;
 
-},{"react":187}],217:[function(require,module,exports){
+},{"react":187}],219:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65406,7 +65512,7 @@ function to3DIndex(track, scene, row, col) {
 
 module.exports = TrackCtrl;
 
-},{"../constants":219,"../utils/matrix":228,"./LabeledMatrixCtrl":214,"nmap":34,"react":187}],218:[function(require,module,exports){
+},{"../constants":221,"../utils/matrix":231,"./LabeledMatrixCtrl":216,"nmap":34,"react":187}],220:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65420,7 +65526,7 @@ module.exports = {
   UPDATE_STATE: "UPDATE_STATE"
 };
 
-},{}],219:[function(require,module,exports){
+},{}],221:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65431,7 +65537,7 @@ module.exports = {
   TRACK_COLORS: ["#e74c3c", "#2ecc71", "#3498db"]
 };
 
-},{}],220:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65506,7 +65612,7 @@ function mapDispatchToProps(dispatch) {
 
 module.exports = connect(mapStateToProps, mapDispatchToProps)(App);
 
-},{"../actions":204,"../components/MasterCtrl":215,"../components/TrackCtrl":217,"react":187,"react-redux":40,"redux":193}],221:[function(require,module,exports){
+},{"../actions":206,"../components/MasterCtrl":217,"../components/TrackCtrl":219,"react":187,"react-redux":40,"redux":193}],223:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
@@ -65517,10 +65623,12 @@ var _require = require("react-redux");
 
 var Provider = _require.Provider;
 
+var requestMIDIAccess = require("request-midi-access");
 var audioTimeline = require("./middlewares/audio-timeline");
 var App = require("./containers/App");
 var Viewer = require("./viewer/Viewer");
 var Sequencer = require("./audio/Sequencer");
+var LaunchPadMK2 = require("./midi/LaunchPadMK2");
 var reducers = require("./reducers");
 var actions = require("./actions");
 
@@ -65531,8 +65639,14 @@ window.addEventListener("DOMContentLoaded", function () {
   var sequencer = new Sequencer(audioContext);
   var timeline = audioTimeline(audioContext);
   var viewer = new Viewer(document.getElementById("viewer"));
+  var midiDevice = new LaunchPadMK2();
   var store = redux.createStore(reducers, redux.applyMiddleware(timeline));
   var initState = store.getState();
+
+  requestMIDIAccess().then(function (access) {
+    midiDevice.initialize(access);
+    midiDevice.setState(initState);
+  });
 
   sequencer.setState(initState);
   viewer.setState(initState);
@@ -65550,10 +65664,14 @@ window.addEventListener("DOMContentLoaded", function () {
 
     store.dispatch(actions.tickSequencer(playbackTime, track, index));
   });
+  midiDevice.on("dispatch", function (e) {
+    store.dispatch(e);
+  });
   store.subscribe(function () {
     var state = store.getState();
     sequencer.setState(state);
     viewer.setState(state);
+    midiDevice.setState(state);
   });
 
   requestAnimationFrame(animate);
@@ -65565,7 +65683,7 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./actions":204,"./audio/Sequencer":205,"./containers/App":220,"./middlewares/audio-timeline":222,"./reducers":223,"./viewer/Viewer":230,"react":187,"react-dom":37,"react-redux":40,"redux":193}],222:[function(require,module,exports){
+},{"./actions":206,"./audio/Sequencer":207,"./containers/App":222,"./middlewares/audio-timeline":224,"./midi/LaunchPadMK2":225,"./reducers":226,"./viewer/Viewer":233,"react":187,"react-dom":37,"react-redux":40,"redux":193,"request-midi-access":195}],224:[function(require,module,exports){
 "use strict";
 
 var ACTION_TYPE_EMIT = "@@audio-timeline/EMIT";
@@ -65611,7 +65729,254 @@ function audioTimeline(audioContext) {
 
 module.exports = audioTimeline;
 
-},{}],223:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
+"use strict";
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var nmap = require("nmap");
+var events = require("events");
+var WebMIDIEmitter = require("web-midi-emitter");
+var actions = require("../actions");
+
+var _require = require("../utils/matrix");
+
+var pluck2D = _require.pluck2D;
+
+var _require2 = require("../constants");
+
+var N = _require2.N;
+
+
+var LED_COLORS = [[0, 59, 7, 52], // R
+[0, 35, 23, 16], // G
+[0, 51, 47, 37]];
+var STATE_NAMES = ["pitchShift", "loopLength", "noteLength"];
+
+var LaunchPadMK2 = function (_events$EventEmitter) {
+  _inherits(LaunchPadMK2, _events$EventEmitter);
+
+  function LaunchPadMK2() {
+    _classCallCheck(this, LaunchPadMK2);
+
+    var _this = _possibleConstructorReturn(this, (LaunchPadMK2.__proto__ || Object.getPrototypeOf(LaunchPadMK2)).call(this));
+
+    _this._device = null;
+    _this._state = null;
+    _this._trackState = null;
+    _this._matrix = null;
+    _this._tick = -1;
+    _this._masterLED = null;
+    _this._matrixLED = null;
+    _this._sceneLED = null;
+    _this._stateMode = false;
+    return _this;
+  }
+
+  _createClass(LaunchPadMK2, [{
+    key: "initialize",
+    value: function initialize(access) {
+      var _this2 = this;
+
+      this._device = new WebMIDIEmitter(access, /^Launchpad/);
+      this._device.on("midimessage", function (_ref) {
+        var data = _ref.data;
+
+        _this2.recv.apply(_this2, _toConsumableArray(data));
+      });
+      this._masterLED = nmap(N, function () {
+        return -1;
+      });
+      this._matrixLED = nmap(N, function () {
+        return nmap(N, function () {
+          return -1;
+        });
+      });
+      this._sceneLED = nmap(N, function () {
+        return -1;
+      });
+    }
+  }, {
+    key: "setState",
+    value: function setState(state) {
+      if (this._device) {
+        this._state = state;
+        this._trackState = state.track[this._state.master.track];
+        this._matrix = pluck2D(this._state.matrix, this._state.master.track, this._trackState.scene);
+        this._tick = this._state.ticks[this._state.master.track];
+        this.render();
+      }
+    }
+  }, {
+    key: "recv",
+    value: function recv(st, d1, d2) {
+      var action = this.getAction(st, d1, d2);
+
+      if (action) {
+        this.emit("dispatch", action);
+      } else {
+        if (st === 0xb0 && d1 === 0x6c) {
+          this._stateMode = d2 ? 1 : 0;
+          this.render();
+        }
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      this.renderMasterLED();
+      if (this._stateMode) {
+        this.renderStateLED();
+      } else {
+        this.renderMatrixLED();
+      }
+      this.renderSceneLED();
+    }
+  }, {
+    key: "renderMasterLED",
+    value: function renderMasterLED() {
+      var states = [this._state.master.play ? 62 : 0, 0, 0, 0, this._stateMode ? 62 : 0, this._state.master.track === 0 ? LED_COLORS[0][2 + this._stateMode] : 0, this._state.master.track === 1 ? LED_COLORS[1][2 + this._stateMode] : 0, this._state.master.track === 2 ? LED_COLORS[2][2 + this._stateMode] : 0];
+      for (var i = 0; i < N; i++) {
+        var ledColor = states[i];
+        if (this._masterLED[i] !== ledColor) {
+          this._device.send([0xb0, 0x68 + i, ledColor]);
+          this._masterLED[i] = ledColor;
+        }
+      }
+    }
+  }, {
+    key: "renderMatrixLED",
+    value: function renderMatrixLED() {
+      var ledColors = LED_COLORS[this._state.master.track];
+      for (var i = 0; i < N; i++) {
+        for (var j = 0; j < N; j++) {
+          var ledColor = ledColors[this._matrix[i][j] * 2 + (j === this._tick ? 1 : 0)];
+          if (this._matrixLED[i][j] !== ledColor) {
+            this._device.send([0x90, toNoteNumber(i, j), ledColor]);
+            this._matrixLED[i][j] = ledColor;
+          }
+        }
+      }
+    }
+  }, {
+    key: "renderStateLED",
+    value: function renderStateLED() {
+      var _this3 = this;
+
+      var ledColors = LED_COLORS[this._state.master.track];
+      var states = STATE_NAMES.map(function (name) {
+        return _this3._trackState[name];
+      });
+      for (var i = 0; i < N; i++) {
+        for (var j = 0; j < N; j++) {
+          var ledColor = ledColors[states[i] === j ? 2 : 0];
+          if (this._matrixLED[i][j] !== ledColor) {
+            this._device.send([0x90, toNoteNumber(i, j), ledColor]);
+            this._matrixLED[i][j] = ledColor;
+          }
+        }
+      }
+    }
+  }, {
+    key: "renderSceneLED",
+    value: function renderSceneLED() {
+      var ledColors = LED_COLORS[this._state.master.track];
+      for (var i = 0; i < N; i++) {
+        var ledColor = ledColors[this._trackState.scene === i ? 2 : 0];
+        if (this._sceneLED[i] !== ledColor) {
+          this._device.send([0x90, toNoteNumber(N - i - 1, 8), ledColor]);
+          this._sceneLED[i] = ledColor;
+        }
+      }
+    }
+  }, {
+    key: "getAction",
+    value: function getAction(st, d1, d2) {
+      return _getAction(this._state.master.track, this._trackState.scene, st, d1, d2);
+    }
+  }]);
+
+  return LaunchPadMK2;
+}(events.EventEmitter);
+
+function _getAction(track, scene, st, d1, d2) {
+  if (st === 0x90 && d2 !== 0) {
+    var _fromNoteNumber = fromNoteNumber(d1);
+
+    var _fromNoteNumber2 = _slicedToArray(_fromNoteNumber, 2);
+
+    var col = _fromNoteNumber2[0];
+    var row = _fromNoteNumber2[1];
+
+    // matrix
+
+    if (0 <= col && col <= 7) {
+      if (this._stateMode) {
+        if (0 <= row && row <= 2) {
+          return actions.updateState(track, STATE_NAMES[row], col);
+        }
+      } else {
+        if (0 <= row && row <= 7) {
+          return actions.toggleMatrix.apply(actions, _toConsumableArray(to3DIndex(track, scene, row, col)));
+        }
+      }
+    }
+
+    // right button
+    if (col === 8) {
+      return actions.updateState(track, "scene", 7 - row);
+    }
+  }
+
+  // top button
+  if (st === 0xb0 && d2 !== 0) {
+    switch (d1 - 0x68) {
+      case 0:
+        return actions.togglePlay();
+      case 1:
+        return actions.random();
+      case 2:
+        return actions.clear();
+      case 3:
+        return actions.changeBPM(-1);
+      case 5:case 6:case 7:
+        return actions.changeTrack(d1 - 0x68 - 5);
+    }
+  }
+}
+
+function fromNoteNumber(value) {
+  return [value % 10 - 1, 8 - Math.floor(value / 10)];
+}
+
+function toNoteNumber(row, col) {
+  return 80 - row * 10 + (col + 1);
+}
+
+function to3DIndex(track, scene, row, col) {
+  switch (track) {
+    case 0:
+      return [scene, row, col];
+    case 1:
+      return [col, scene, row];
+    case 2:
+      return [row, col, scene];
+  }
+}
+
+module.exports = LaunchPadMK2;
+
+},{"../actions":206,"../constants":221,"../utils/matrix":231,"events":1,"nmap":34,"web-midi-emitter":204}],226:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65627,7 +65992,7 @@ module.exports = redux.combineReducers({
   track: track
 });
 
-},{"./master":224,"./matrix":225,"./ticks":226,"./track":227,"redux":193}],224:[function(require,module,exports){
+},{"./master":227,"./matrix":228,"./ticks":229,"./track":230,"redux":193}],227:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -65635,6 +66000,10 @@ var types = require("../constants/ActionTypes");
 var _require = require("../utils/random");
 
 var irand = _require.irand;
+
+var _require2 = require("../constants");
+
+var BPM_MAP = _require2.BPM_MAP;
 
 
 module.exports = {
@@ -65648,14 +66017,17 @@ module.exports = {
     return state;
   },
   bpm: function bpm() {
-    var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
+    var state = arguments.length <= 0 || arguments[0] === undefined ? irand(BPM_MAP.length) : arguments[0];
     var action = arguments[1];
 
     if (action.type === types.CHANGE_BPM) {
+      if (action.bpm === -1) {
+        return (state + 1) % BPM_MAP.length;
+      }
       return action.bpm;
     }
     if (action.type === types.RANDOM) {
-      return irand(3);
+      return irand(BPM_MAP.length);
     }
     return state;
   },
@@ -65673,7 +66045,7 @@ module.exports = {
   }
 };
 
-},{"../constants/ActionTypes":218,"../utils/random":229}],225:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232}],228:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65719,7 +66091,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":229,"nmap":34}],226:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232,"nmap":34}],229:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -65736,7 +66108,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants/ActionTypes":218}],227:[function(require,module,exports){
+},{"../constants/ActionTypes":220}],230:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65778,7 +66150,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":229}],228:[function(require,module,exports){
+},{"../constants":221,"../constants/ActionTypes":220,"../utils/random":232}],231:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65820,7 +66192,7 @@ module.exports = {
   }
 };
 
-},{"../constants":219,"nmap":34}],229:[function(require,module,exports){
+},{"../constants":221,"nmap":34}],232:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65838,7 +66210,7 @@ module.exports = {
   }
 };
 
-},{}],230:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -66003,4 +66375,4 @@ function closeTo(a, b) {
 
 module.exports = Viewer;
 
-},{"../constants":219,"nmap":34,"three":197}]},{},[221]);
+},{"../constants":221,"nmap":34,"three":198}]},{},[223]);
