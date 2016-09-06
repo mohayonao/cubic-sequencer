@@ -18,4 +18,13 @@ module.exports = {
     }
     return state;
   },
+  track: (state = irand(3), action) => {
+    if (action.type === "CHANGE_TRACK") {
+      return action.track;
+    }
+    if (action.type === "RANDOM") {
+      return irand(3);
+    }
+    return state;
+  }
 };

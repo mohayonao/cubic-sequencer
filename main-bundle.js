@@ -21910,13 +21910,13 @@ exports.__esModule = true;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-exports["default"] = applyMiddleware;
+exports['default'] = applyMiddleware;
 
 var _compose = require('./compose');
 
 var _compose2 = _interopRequireDefault(_compose);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 /**
  * Creates a store enhancer that applies middleware to the dispatch method
@@ -21940,8 +21940,8 @@ function applyMiddleware() {
   }
 
   return function (createStore) {
-    return function (reducer, initialState, enhancer) {
-      var store = createStore(reducer, initialState, enhancer);
+    return function (reducer, preloadedState, enhancer) {
+      var store = createStore(reducer, preloadedState, enhancer);
       var _dispatch = store.dispatch;
       var chain = [];
 
@@ -21954,7 +21954,7 @@ function applyMiddleware() {
       chain = middlewares.map(function (middleware) {
         return middleware(middlewareAPI);
       });
-      _dispatch = _compose2["default"].apply(undefined, chain)(store.dispatch);
+      _dispatch = _compose2['default'].apply(undefined, chain)(store.dispatch);
 
       return _extends({}, store, {
         dispatch: _dispatch
@@ -21966,7 +21966,7 @@ function applyMiddleware() {
 'use strict';
 
 exports.__esModule = true;
-exports["default"] = bindActionCreators;
+exports['default'] = bindActionCreators;
 function bindActionCreator(actionCreator, dispatch) {
   return function () {
     return dispatch(actionCreator.apply(undefined, arguments));
@@ -22019,7 +22019,7 @@ function bindActionCreators(actionCreators, dispatch) {
 'use strict';
 
 exports.__esModule = true;
-exports["default"] = combineReducers;
+exports['default'] = combineReducers;
 
 var _createStore = require('./createStore');
 
@@ -22031,7 +22031,7 @@ var _warning = require('./utils/warning');
 
 var _warning2 = _interopRequireDefault(_warning);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 function getUndefinedStateErrorMessage(key, action) {
   var actionType = action && action.type;
@@ -22040,20 +22040,24 @@ function getUndefinedStateErrorMessage(key, action) {
   return 'Given action ' + actionName + ', reducer "' + key + '" returned undefined. ' + 'To ignore an action, you must explicitly return the previous state.';
 }
 
-function getUnexpectedStateShapeWarningMessage(inputState, reducers, action) {
+function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, unexpectedKeyCache) {
   var reducerKeys = Object.keys(reducers);
-  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'initialState argument passed to createStore' : 'previous state received by the reducer';
+  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'preloadedState argument passed to createStore' : 'previous state received by the reducer';
 
   if (reducerKeys.length === 0) {
     return 'Store does not have a valid reducer. Make sure the argument passed ' + 'to combineReducers is an object whose values are reducers.';
   }
 
-  if (!(0, _isPlainObject2["default"])(inputState)) {
+  if (!(0, _isPlainObject2['default'])(inputState)) {
     return 'The ' + argumentName + ' has unexpected type of "' + {}.toString.call(inputState).match(/\s([a-z|A-Z]+)/)[1] + '". Expected argument to be an object with the following ' + ('keys: "' + reducerKeys.join('", "') + '"');
   }
 
   var unexpectedKeys = Object.keys(inputState).filter(function (key) {
-    return !reducers.hasOwnProperty(key);
+    return !reducers.hasOwnProperty(key) && !unexpectedKeyCache[key];
+  });
+
+  unexpectedKeys.forEach(function (key) {
+    unexpectedKeyCache[key] = true;
   });
 
   if (unexpectedKeys.length > 0) {
@@ -22098,11 +22102,22 @@ function combineReducers(reducers) {
   var finalReducers = {};
   for (var i = 0; i < reducerKeys.length; i++) {
     var key = reducerKeys[i];
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (typeof reducers[key] === 'undefined') {
+        (0, _warning2['default'])('No reducer provided for key "' + key + '"');
+      }
+    }
+
     if (typeof reducers[key] === 'function') {
       finalReducers[key] = reducers[key];
     }
   }
   var finalReducerKeys = Object.keys(finalReducers);
+
+  if (process.env.NODE_ENV !== 'production') {
+    var unexpectedKeyCache = {};
+  }
 
   var sanityError;
   try {
@@ -22120,9 +22135,9 @@ function combineReducers(reducers) {
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action);
+      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache);
       if (warningMessage) {
-        (0, _warning2["default"])(warningMessage);
+        (0, _warning2['default'])(warningMessage);
       }
     }
 
@@ -22169,28 +22184,26 @@ function compose() {
     return function (arg) {
       return arg;
     };
-  } else {
-    var _ret = function () {
-      var last = funcs[funcs.length - 1];
-      var rest = funcs.slice(0, -1);
-      return {
-        v: function v() {
-          return rest.reduceRight(function (composed, f) {
-            return f(composed);
-          }, last.apply(undefined, arguments));
-        }
-      };
-    }();
-
-    if (typeof _ret === "object") return _ret.v;
   }
+
+  if (funcs.length === 1) {
+    return funcs[0];
+  }
+
+  var last = funcs[funcs.length - 1];
+  var rest = funcs.slice(0, -1);
+  return function () {
+    return rest.reduceRight(function (composed, f) {
+      return f(composed);
+    }, last.apply(undefined, arguments));
+  };
 }
 },{}],192:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
 exports.ActionTypes = undefined;
-exports["default"] = createStore;
+exports['default'] = createStore;
 
 var _isPlainObject = require('lodash/isPlainObject');
 
@@ -22200,7 +22213,7 @@ var _symbolObservable = require('symbol-observable');
 
 var _symbolObservable2 = _interopRequireDefault(_symbolObservable);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 /**
  * These are private action types reserved by Redux.
@@ -22223,7 +22236,7 @@ var ActionTypes = exports.ActionTypes = {
  * @param {Function} reducer A function that returns the next state tree, given
  * the current state tree and the action to handle.
  *
- * @param {any} [initialState] The initial state. You may optionally specify it
+ * @param {any} [preloadedState] The initial state. You may optionally specify it
  * to hydrate the state from the server in universal apps, or to restore a
  * previously serialized user session.
  * If you use `combineReducers` to produce the root reducer function, this must be
@@ -22237,12 +22250,12 @@ var ActionTypes = exports.ActionTypes = {
  * @returns {Store} A Redux store that lets you read the state, dispatch actions
  * and subscribe to changes.
  */
-function createStore(reducer, initialState, enhancer) {
+function createStore(reducer, preloadedState, enhancer) {
   var _ref2;
 
-  if (typeof initialState === 'function' && typeof enhancer === 'undefined') {
-    enhancer = initialState;
-    initialState = undefined;
+  if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
+    enhancer = preloadedState;
+    preloadedState = undefined;
   }
 
   if (typeof enhancer !== 'undefined') {
@@ -22250,7 +22263,7 @@ function createStore(reducer, initialState, enhancer) {
       throw new Error('Expected the enhancer to be a function.');
     }
 
-    return enhancer(createStore)(reducer, initialState);
+    return enhancer(createStore)(reducer, preloadedState);
   }
 
   if (typeof reducer !== 'function') {
@@ -22258,7 +22271,7 @@ function createStore(reducer, initialState, enhancer) {
   }
 
   var currentReducer = reducer;
-  var currentState = initialState;
+  var currentState = preloadedState;
   var currentListeners = [];
   var nextListeners = currentListeners;
   var isDispatching = false;
@@ -22350,7 +22363,7 @@ function createStore(reducer, initialState, enhancer) {
    * return something else (for example, a Promise you can await).
    */
   function dispatch(action) {
-    if (!(0, _isPlainObject2["default"])(action)) {
+    if (!(0, _isPlainObject2['default'])(action)) {
       throw new Error('Actions must be plain objects. ' + 'Use custom middleware for async actions.');
     }
 
@@ -22415,7 +22428,6 @@ function createStore(reducer, initialState, enhancer) {
        * be used to unsubscribe the observable from the store, and prevent further
        * emission of values from the observable.
        */
-
       subscribe: function subscribe(observer) {
         if (typeof observer !== 'object') {
           throw new TypeError('Expected the observer to be an object.');
@@ -22431,7 +22443,7 @@ function createStore(reducer, initialState, enhancer) {
         var unsubscribe = outerSubscribe(observeState);
         return { unsubscribe: unsubscribe };
       }
-    }, _ref[_symbolObservable2["default"]] = function () {
+    }, _ref[_symbolObservable2['default']] = function () {
       return this;
     }, _ref;
   }
@@ -22446,7 +22458,7 @@ function createStore(reducer, initialState, enhancer) {
     subscribe: subscribe,
     getState: getState,
     replaceReducer: replaceReducer
-  }, _ref2[_symbolObservable2["default"]] = observable, _ref2;
+  }, _ref2[_symbolObservable2['default']] = observable, _ref2;
 }
 },{"lodash/isPlainObject":33,"symbol-observable":195}],193:[function(require,module,exports){
 (function (process){
@@ -22479,7 +22491,7 @@ var _warning = require('./utils/warning');
 
 var _warning2 = _interopRequireDefault(_warning);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 /*
 * This is a dummy function to check if the function name has been altered by minification.
@@ -22488,20 +22500,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 function isCrushed() {}
 
 if (process.env.NODE_ENV !== 'production' && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
-  (0, _warning2["default"])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
+  (0, _warning2['default'])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
 }
 
-exports.createStore = _createStore2["default"];
-exports.combineReducers = _combineReducers2["default"];
-exports.bindActionCreators = _bindActionCreators2["default"];
-exports.applyMiddleware = _applyMiddleware2["default"];
-exports.compose = _compose2["default"];
+exports.createStore = _createStore2['default'];
+exports.combineReducers = _combineReducers2['default'];
+exports.bindActionCreators = _bindActionCreators2['default'];
+exports.applyMiddleware = _applyMiddleware2['default'];
+exports.compose = _compose2['default'];
 }).call(this,require('_process'))
 },{"./applyMiddleware":188,"./bindActionCreators":189,"./combineReducers":190,"./compose":191,"./createStore":192,"./utils/warning":194,"_process":36}],194:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
-exports["default"] = warning;
+exports['default'] = warning;
 /**
  * Prints a warning in the console if it exists.
  *
@@ -22524,26 +22536,50 @@ function warning(message) {
   /* eslint-enable no-empty */
 }
 },{}],195:[function(require,module,exports){
+module.exports = require('./lib/index');
+
+},{"./lib/index":196}],196:[function(require,module,exports){
 (function (global){
-/* global window */
 'use strict';
 
-module.exports = require('./ponyfill')(global || window || this);
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
 
+var _ponyfill = require('./ponyfill');
+
+var _ponyfill2 = _interopRequireDefault(_ponyfill);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var root = undefined; /* global window */
+
+if (typeof global !== 'undefined') {
+	root = global;
+} else if (typeof window !== 'undefined') {
+	root = window;
+}
+
+var result = (0, _ponyfill2['default'])(root);
+exports['default'] = result;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill":196}],196:[function(require,module,exports){
+},{"./ponyfill":197}],197:[function(require,module,exports){
 'use strict';
 
-module.exports = function symbolObservablePonyfill(root) {
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports['default'] = symbolObservablePonyfill;
+function symbolObservablePonyfill(root) {
 	var result;
-	var Symbol = root.Symbol;
+	var _Symbol = root.Symbol;
 
-	if (typeof Symbol === 'function') {
-		if (Symbol.observable) {
-			result = Symbol.observable;
+	if (typeof _Symbol === 'function') {
+		if (_Symbol.observable) {
+			result = _Symbol.observable;
 		} else {
-			result = Symbol('observable');
-			Symbol.observable = result;
+			result = _Symbol('observable');
+			_Symbol.observable = result;
 		}
 	} else {
 		result = '@@observable';
@@ -22551,8 +22587,7 @@ module.exports = function symbolObservablePonyfill(root) {
 
 	return result;
 };
-
-},{}],197:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -64289,10 +64324,10 @@ module.exports = function symbolObservablePonyfill(root) {
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-},{}],198:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 module.exports = require("./lib");
 
-},{"./lib":201}],199:[function(require,module,exports){
+},{"./lib":202}],200:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64469,7 +64504,7 @@ var WebAudioScheduler = function (_events$EventEmitter) {
 
 module.exports = WebAudioScheduler;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./defaultContext":200,"./utils/defaults":202,"events":1}],200:[function(require,module,exports){
+},{"./defaultContext":201,"./utils/defaults":203,"events":1}],201:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -64477,11 +64512,11 @@ module.exports = {
     return Date.now() / 1000;
   }
 };
-},{}],201:[function(require,module,exports){
+},{}],202:[function(require,module,exports){
 "use strict";
 
 module.exports = require("./WebAudioScheduler");
-},{"./WebAudioScheduler":199}],202:[function(require,module,exports){
+},{"./WebAudioScheduler":200}],203:[function(require,module,exports){
 "use strict";
 
 function defaults(value, defaultValue) {
@@ -64489,7 +64524,7 @@ function defaults(value, defaultValue) {
 }
 
 module.exports = defaults;
-},{}],203:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -64560,63 +64595,100 @@ if (global === global.window && global.URL && global.Blob && global.Worker) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],204:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 "use strict";
 
 module.exports = function (bpm) {
   return { type: "CHANGE_BPM", bpm: bpm };
 };
 
-},{}],205:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 "use strict";
 
 module.exports = function (track) {
   return { type: "CHANGE_TRACK", track: track };
 };
 
-},{}],206:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 "use strict";
 
 module.exports = function () {
   return { type: "CLEAR" };
 };
 
-},{}],207:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 "use strict";
 
 module.exports = function () {
   return { type: "RANDOM" };
 };
 
-},{}],208:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 "use strict";
 
 module.exports = function (i, j, k) {
   return { type: "TOGGLE_MATRIX", i: i, j: j, k: k };
 };
 
-},{}],209:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 "use strict";
 
 module.exports = function () {
   return { type: "TOGGLE_PLAY" };
 };
 
-},{}],210:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 "use strict";
 
 module.exports = function (track, dataType, dataValue) {
   return { type: "UPDATE_STATE", track: track, dataType: dataType, dataValue: dataValue };
 };
 
-},{}],211:[function(require,module,exports){
+},{}],212:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _dec, _class, _class2, _temp;
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var React = require("react");
+var MasterCtrl = require("./MasterCtrl");
+var TrackCtrl = require("./TrackCtrl");
+
+var CubeSeqCtrl = function (_React$Component) {
+  _inherits(CubeSeqCtrl, _React$Component);
+
+  function CubeSeqCtrl() {
+    _classCallCheck(this, CubeSeqCtrl);
+
+    return _possibleConstructorReturn(this, (CubeSeqCtrl.__proto__ || Object.getPrototypeOf(CubeSeqCtrl)).apply(this, arguments));
+  }
+
+  _createClass(CubeSeqCtrl, [{
+    key: "render",
+    value: function render() {
+      return React.createElement(
+        "div",
+        null,
+        React.createElement(MasterCtrl, null),
+        React.createElement(TrackCtrl, null)
+      );
+    }
+  }]);
+
+  return CubeSeqCtrl;
+}(React.Component);
+
+module.exports = CubeSeqCtrl;
+
+},{"./MasterCtrl":213,"./TrackCtrl":215,"react":187}],213:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -64637,29 +64709,22 @@ var random = require("../actions/random");
 var clear = require("../actions/clear");
 var _changeBPM = require("../actions/changeBPM");
 var _changeTrack = require("../actions/changeTrack");
-var _updateState = require("../actions/updateState");
-var toggleMatrix = require("../actions/toggleMatrix");
-var pluck2D = require("../utils/pluck2D");
 
 var _require2 = require("../consts");
 
-var N = _require2.N;
+var DEFAULT_COLOR = _require2.DEFAULT_COLOR;
+var TRACK_COLORS = _require2.TRACK_COLORS;
 
+var MasterCtrl = function (_React$Component) {
+  _inherits(MasterCtrl, _React$Component);
 
-var defaultColor = "#ecf0f1";
+  function MasterCtrl() {
+    _classCallCheck(this, MasterCtrl);
 
-var CubeSeqCtrl = (_dec = connect(function (state) {
-  return state;
-}), _dec(_class = (_temp = _class2 = function (_React$Component) {
-  _inherits(CubeSeqCtrl, _React$Component);
-
-  function CubeSeqCtrl() {
-    _classCallCheck(this, CubeSeqCtrl);
-
-    return _possibleConstructorReturn(this, (CubeSeqCtrl.__proto__ || Object.getPrototypeOf(CubeSeqCtrl)).apply(this, arguments));
+    return _possibleConstructorReturn(this, (MasterCtrl.__proto__ || Object.getPrototypeOf(MasterCtrl)).apply(this, arguments));
   }
 
-  _createClass(CubeSeqCtrl, [{
+  _createClass(MasterCtrl, [{
     key: "ctrlApp",
     value: function ctrlApp() {
       var _this2 = this;
@@ -64687,62 +64752,21 @@ var CubeSeqCtrl = (_dec = connect(function (state) {
       };
     }
   }, {
-    key: "updateState",
-    value: function updateState(dataType) {
-      var _this5 = this;
-
-      return function (e) {
-        var track = _this5.props.track.selected;
-        var dataValue = e.col;
-
-        _this5.props.dispatch(_updateState(track, dataType, dataValue));
-      };
-    }
-  }, {
-    key: "updateMatrix",
-    value: function updateMatrix() {
-      var _this6 = this;
-
-      return function (e) {
-        var track = _this6.props.track.selected;
-        var scene = _this6.props.track.state[track].scene;
-
-        _this6.props.dispatch(toggleMatrix.apply(undefined, _toConsumableArray(to3DIndex(track, scene, e.row, e.col))));
-      };
-    }
-  }, {
     key: "render",
     value: function render() {
       var _props = this.props;
-      var master = _props.master;
+      var play = _props.play;
+      var bpm = _props.bpm;
       var track = _props.track;
 
-      var state = track.state[track.selected];
-      var trackColors = Object.keys(track.state).map(function (_) {
-        return track.state[_].color;
-      });
-      var playMat = [[master.play, 0, 0]];
+      var playMat = [[play, 0, 0]];
       var bpmMat = [nmap(3, function (_, i) {
-        return i === master.bpm ? 1 : 0;
+        return i === bpm ? 1 : 0;
       })];
-      var axisMat = [trackColors.map(function (_, i) {
-        return track.selected === i ? i + 1 : 0;
+      var axisMat = [TRACK_COLORS.map(function (_, i) {
+        return track === i ? i + 1 : 0;
       })];
-      var pitchShiftMat = [nmap(N, function (_, i) {
-        return i === state.pitchShift ? 1 : 0;
-      })];
-      var loopLengthMat = [nmap(N, function (_, i) {
-        return i === state.loopLength ? 1 : 0;
-      })];
-      var noteLengthMat = [nmap(N, function (_, i) {
-        return i === state.noteLength ? 1 : 0;
-      })];
-      var sceneMat = [nmap(N, function (_, i) {
-        return i === state.scene ? 1 : 0;
-      })];
-      var matrix = pluck2D(this.props.matrix, track.selected, state.scene);
-      var axisColor = defaultColor + ";" + trackColors.join(";");
-      var ctrlColor = defaultColor + ";" + trackColors[track.selected];
+      var axisColor = DEFAULT_COLOR + ";" + TRACK_COLORS.join(";");
 
       return React.createElement(
         "div",
@@ -64776,7 +64800,251 @@ var CubeSeqCtrl = (_dec = connect(function (state) {
             "AXIS:"
           ),
           React.createElement(MatrixCtrl, { data: axisMat, color: axisColor, onCellClick: this.changeTrack() })
-        ),
+        )
+      );
+    }
+  }]);
+
+  return MasterCtrl;
+}(React.Component);
+
+MasterCtrl.propTypes = {
+  dispatch: React.PropTypes.func.isRequired,
+  play: React.PropTypes.number.isRequired,
+  bpm: React.PropTypes.number.isRequired,
+  track: React.PropTypes.number.isRequired
+};
+
+
+module.exports = connect(function (state) {
+  return state.master;
+})(MasterCtrl);
+
+},{"../actions/changeBPM":205,"../actions/changeTrack":206,"../actions/clear":207,"../actions/random":208,"../actions/togglePlay":210,"../consts":216,"./MatrixCtrl":214,"nmap":34,"react":187,"react-redux":40}],214:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var React = require("react");
+
+var MatrixCtrl = function (_React$Component) {
+  _inherits(MatrixCtrl, _React$Component);
+
+  function MatrixCtrl() {
+    _classCallCheck(this, MatrixCtrl);
+
+    return _possibleConstructorReturn(this, (MatrixCtrl.__proto__ || Object.getPrototypeOf(MatrixCtrl)).apply(this, arguments));
+  }
+
+  _createClass(MatrixCtrl, [{
+    key: "render",
+    value: function render() {
+      var _this2 = this;
+
+      var rows = this.props.data.map(function (data, i) {
+        return React.createElement(MatrixCtrlRow, { key: i, row: i, data: data, color: _this2.props.color, onCellClick: _this2.props.onCellClick });
+      });
+
+      return React.createElement(
+        "div",
+        { className: "matrix-ctrl" },
+        rows
+      );
+    }
+  }]);
+
+  return MatrixCtrl;
+}(React.Component);
+
+MatrixCtrl.propTypes = {
+  data: React.PropTypes.array.isRequired,
+  color: React.PropTypes.string,
+  onCellClick: React.PropTypes.func
+};
+
+var MatrixCtrlRow = function (_React$Component2) {
+  _inherits(MatrixCtrlRow, _React$Component2);
+
+  function MatrixCtrlRow() {
+    _classCallCheck(this, MatrixCtrlRow);
+
+    return _possibleConstructorReturn(this, (MatrixCtrlRow.__proto__ || Object.getPrototypeOf(MatrixCtrlRow)).apply(this, arguments));
+  }
+
+  _createClass(MatrixCtrlRow, [{
+    key: "render",
+    value: function render() {
+      var _this4 = this;
+
+      var row = this.props.row;
+      var cols = this.props.data.map(function (data, i) {
+        return React.createElement(MatrixCtrlCell, { key: i, row: row, col: i, color: _this4.props.color, data: data, onClick: _this4.props.onCellClick });
+      });
+
+      return React.createElement(
+        "div",
+        null,
+        cols
+      );
+    }
+  }]);
+
+  return MatrixCtrlRow;
+}(React.Component);
+
+MatrixCtrlRow.propTypes = {
+  data: React.PropTypes.array.isRequired,
+  row: React.PropTypes.number.isRequired,
+  color: React.PropTypes.string,
+  onCellClick: React.PropTypes.func
+};
+
+var MatrixCtrlCell = function (_React$Component3) {
+  _inherits(MatrixCtrlCell, _React$Component3);
+
+  function MatrixCtrlCell() {
+    _classCallCheck(this, MatrixCtrlCell);
+
+    return _possibleConstructorReturn(this, (MatrixCtrlCell.__proto__ || Object.getPrototypeOf(MatrixCtrlCell)).apply(this, arguments));
+  }
+
+  _createClass(MatrixCtrlCell, [{
+    key: "onClick",
+    value: function onClick() {
+      if (this.props.onClick) {
+        this.props.onClick({
+          row: this.props.row,
+          col: this.props.col,
+          data: this.props.data
+        });
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var colors = (this.props.color || "").split(";");
+      var style = {
+        backgroundColor: colors[Math.floor(this.props.data)] || "transparent"
+      };
+
+      return React.createElement("span", { style: style, onClick: this.onClick.bind(this) });
+    }
+  }]);
+
+  return MatrixCtrlCell;
+}(React.Component);
+
+MatrixCtrlCell.propTypes = {
+  data: React.PropTypes.number.isRequired,
+  row: React.PropTypes.number.isRequired,
+  col: React.PropTypes.number.isRequired,
+  color: React.PropTypes.string,
+  onClick: React.PropTypes.func
+};
+
+
+module.exports = MatrixCtrl;
+
+},{"react":187}],215:[function(require,module,exports){
+"use strict";
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var React = require("react");
+
+var _require = require("react-redux");
+
+var connect = _require.connect;
+
+var nmap = require("nmap");
+var MatrixCtrl = require("./MatrixCtrl");
+var _updateState = require("../actions/updateState");
+var toggleMatrix = require("../actions/toggleMatrix");
+var pluck2D = require("../utils/pluck2D");
+
+var _require2 = require("../consts");
+
+var N = _require2.N;
+var DEFAULT_COLOR = _require2.DEFAULT_COLOR;
+var TRACK_COLORS = _require2.TRACK_COLORS;
+
+var TrackCtrl = function (_React$Component) {
+  _inherits(TrackCtrl, _React$Component);
+
+  function TrackCtrl() {
+    _classCallCheck(this, TrackCtrl);
+
+    return _possibleConstructorReturn(this, (TrackCtrl.__proto__ || Object.getPrototypeOf(TrackCtrl)).apply(this, arguments));
+  }
+
+  _createClass(TrackCtrl, [{
+    key: "updateState",
+    value: function updateState(dataType) {
+      var _this2 = this;
+
+      return function (e) {
+        var track = _this2.props.track;
+        var dataValue = e.col;
+
+        _this2.props.dispatch(_updateState(track, dataType, dataValue));
+      };
+    }
+  }, {
+    key: "updateMatrix",
+    value: function updateMatrix() {
+      var _this3 = this;
+
+      return function (e) {
+        var track = _this3.props.track;
+        var scene = _this3.props.scene;
+
+        _this3.props.dispatch(toggleMatrix.apply(undefined, _toConsumableArray(to3DIndex(track, scene, e.row, e.col))));
+      };
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _props = this.props;
+      var track = _props.track;
+      var pitchShift = _props.pitchShift;
+      var loopLength = _props.loopLength;
+      var noteLength = _props.noteLength;
+      var scene = _props.scene;
+
+      var pitchShiftMat = [nmap(N, function (_, i) {
+        return i === pitchShift ? 1 : 0;
+      })];
+      var loopLengthMat = [nmap(N, function (_, i) {
+        return i === loopLength ? 1 : 0;
+      })];
+      var noteLengthMat = [nmap(N, function (_, i) {
+        return i === noteLength ? 1 : 0;
+      })];
+      var sceneMat = [nmap(N, function (_, i) {
+        return i === scene ? 1 : 0;
+      })];
+      var matrix = pluck2D(this.props.matrix, track, scene);
+      var ctrlColor = DEFAULT_COLOR + ";" + TRACK_COLORS[track];
+
+      return React.createElement(
+        "div",
+        null,
         React.createElement(
           "div",
           null,
@@ -64831,13 +65099,18 @@ var CubeSeqCtrl = (_dec = connect(function (state) {
     }
   }]);
 
-  return CubeSeqCtrl;
-}(React.Component), _class2.propTypes = {
+  return TrackCtrl;
+}(React.Component);
+
+TrackCtrl.propTypes = {
   dispatch: React.PropTypes.func.isRequired,
-  master: React.PropTypes.object.isRequired,
-  matrix: React.PropTypes.object.isRequired,
-  track: React.PropTypes.object.isRequired
-}, _temp)) || _class);
+  matrix: React.PropTypes.array.isRequired,
+  track: React.PropTypes.number.isRequired,
+  pitchShift: React.PropTypes.number.isRequired,
+  loopLength: React.PropTypes.number.isRequired,
+  noteLength: React.PropTypes.number.isRequired,
+  scene: React.PropTypes.number.isRequired
+};
 
 
 function to3DIndex(track, scene, row, col) {
@@ -64851,141 +65124,20 @@ function to3DIndex(track, scene, row, col) {
   }
 }
 
-module.exports = CubeSeqCtrl;
+module.exports = connect(function (state) {
+  return _extends({ track: state.master.track }, state.track[state.master.track], { matrix: state.matrix });
+})(TrackCtrl);
 
-},{"../actions/changeBPM":204,"../actions/changeTrack":205,"../actions/clear":206,"../actions/random":207,"../actions/toggleMatrix":208,"../actions/togglePlay":209,"../actions/updateState":210,"../consts":213,"../utils/pluck2D":235,"./MatrixCtrl":212,"nmap":34,"react":187,"react-redux":40}],212:[function(require,module,exports){
-"use strict";
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _class, _temp, _class2, _temp2, _class3, _temp3;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var React = require("react");
-
-var MatrixCtrl = (_temp = _class = function (_React$Component) {
-  _inherits(MatrixCtrl, _React$Component);
-
-  function MatrixCtrl() {
-    _classCallCheck(this, MatrixCtrl);
-
-    return _possibleConstructorReturn(this, (MatrixCtrl.__proto__ || Object.getPrototypeOf(MatrixCtrl)).apply(this, arguments));
-  }
-
-  _createClass(MatrixCtrl, [{
-    key: "render",
-    value: function render() {
-      var _this2 = this;
-
-      var rows = this.props.data.map(function (data, i) {
-        return React.createElement(MatrixCtrlRow, { key: i, row: i, data: data, color: _this2.props.color, onCellClick: _this2.props.onCellClick });
-      });
-
-      return React.createElement(
-        "div",
-        { className: "matrix-ctrl" },
-        rows
-      );
-    }
-  }]);
-
-  return MatrixCtrl;
-}(React.Component), _class.propTypes = {
-  data: React.PropTypes.array.isRequired,
-  color: React.PropTypes.string,
-  onCellClick: React.PropTypes.func
-}, _temp);
-var MatrixCtrlRow = (_temp2 = _class2 = function (_React$Component2) {
-  _inherits(MatrixCtrlRow, _React$Component2);
-
-  function MatrixCtrlRow() {
-    _classCallCheck(this, MatrixCtrlRow);
-
-    return _possibleConstructorReturn(this, (MatrixCtrlRow.__proto__ || Object.getPrototypeOf(MatrixCtrlRow)).apply(this, arguments));
-  }
-
-  _createClass(MatrixCtrlRow, [{
-    key: "render",
-    value: function render() {
-      var _this4 = this;
-
-      var row = this.props.row;
-      var cols = this.props.data.map(function (data, i) {
-        return React.createElement(MatrixCtrlCell, { key: i, row: row, col: i, color: _this4.props.color, data: data, onClick: _this4.props.onCellClick });
-      });
-
-      return React.createElement(
-        "div",
-        null,
-        cols
-      );
-    }
-  }]);
-
-  return MatrixCtrlRow;
-}(React.Component), _class2.propTypes = {
-  data: React.PropTypes.array.isRequired,
-  row: React.PropTypes.number.isRequired,
-  color: React.PropTypes.string,
-  onCellClick: React.PropTypes.func
-}, _temp2);
-var MatrixCtrlCell = (_temp3 = _class3 = function (_React$Component3) {
-  _inherits(MatrixCtrlCell, _React$Component3);
-
-  function MatrixCtrlCell() {
-    _classCallCheck(this, MatrixCtrlCell);
-
-    return _possibleConstructorReturn(this, (MatrixCtrlCell.__proto__ || Object.getPrototypeOf(MatrixCtrlCell)).apply(this, arguments));
-  }
-
-  _createClass(MatrixCtrlCell, [{
-    key: "onClick",
-    value: function onClick() {
-      if (this.props.onClick) {
-        this.props.onClick({
-          row: this.props.row,
-          col: this.props.col,
-          data: this.props.data
-        });
-      }
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var colors = (this.props.color || "").split(";");
-      var style = {
-        backgroundColor: colors[Math.floor(this.props.data)] || "transparent"
-      };
-
-      return React.createElement("span", { style: style, onClick: this.onClick.bind(this) });
-    }
-  }]);
-
-  return MatrixCtrlCell;
-}(React.Component), _class3.propTypes = {
-  data: React.PropTypes.number.isRequired,
-  row: React.PropTypes.number.isRequired,
-  col: React.PropTypes.number.isRequired,
-  color: React.PropTypes.string,
-  onClick: React.PropTypes.func
-}, _temp3);
-
-
-module.exports = MatrixCtrl;
-
-},{"react":187}],213:[function(require,module,exports){
+},{"../actions/toggleMatrix":209,"../actions/updateState":211,"../consts":216,"../utils/pluck2D":234,"./MatrixCtrl":214,"nmap":34,"react":187,"react-redux":40}],216:[function(require,module,exports){
 "use strict";
 
 module.exports = {
-  N: 8
+  N: 8,
+  DEFAULT_COLOR: "#ecf0f1",
+  TRACK_COLORS: ["#e74c3c", "#2ecc71", "#3498db"]
 };
 
-},{}],214:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
@@ -65037,7 +65189,7 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./components/CubeSeqCtrl":211,"./reducers":215,"./sequencer/Sequencer":223,"./viewer/Viewer":237,"react":187,"react-dom":37,"react-redux":40,"redux":193}],215:[function(require,module,exports){
+},{"./components/CubeSeqCtrl":212,"./reducers":218,"./sequencer/Sequencer":222,"./viewer/Viewer":236,"react":187,"react-dom":37,"react-redux":40,"redux":193}],218:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65046,58 +65198,55 @@ var matrix = require("./matrix");
 var track = require("./track");
 
 module.exports = redux.combineReducers({
-  master: master,
-  matrix: matrix,
-  track: track
+  master: redux.combineReducers(master),
+  track: track,
+  matrix: matrix
 });
 
-},{"./master":217,"./matrix":219,"./track":220,"redux":193}],216:[function(require,module,exports){
+},{"./master":219,"./matrix":220,"./track":221,"redux":193}],219:[function(require,module,exports){
 "use strict";
 
-var irand = require("../../utils/irand");
+var irand = require("../utils/irand");
 
-module.exports = function () {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
-  var action = arguments[1];
+module.exports = {
+  play: function play() {
+    var state = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+    var action = arguments[1];
 
-  if (action.type === "CHANGE_BPM") {
-    return action.bpm;
+    if (action.type === "TOGGLE_PLAY") {
+      return 1 - state;
+    }
+    return state;
+  },
+  bpm: function bpm() {
+    var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
+    var action = arguments[1];
+
+    if (action.type === "CHANGE_BPM") {
+      return action.bpm;
+    }
+    if (action.type === "RANDOM") {
+      return irand(3);
+    }
+    return state;
+  },
+  track: function track() {
+    var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
+    var action = arguments[1];
+
+    if (action.type === "CHANGE_TRACK") {
+      return action.track;
+    }
+    if (action.type === "RANDOM") {
+      return irand(3);
+    }
+    return state;
   }
-  if (action.type === "RANDOM") {
-    return irand(3);
-  }
-  return state;
 };
 
-},{"../../utils/irand":233}],217:[function(require,module,exports){
+},{"../utils/irand":232}],220:[function(require,module,exports){
 "use strict";
 
-var redux = require("redux");
-var play = require("./play");
-var bpm = require("./bpm");
-
-module.exports = redux.combineReducers({
-  play: play,
-  bpm: bpm
-});
-
-},{"./bpm":216,"./play":218,"redux":193}],218:[function(require,module,exports){
-"use strict";
-
-module.exports = function () {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
-  var action = arguments[1];
-
-  if (action.type === "TOGGLE_PLAY") {
-    return 1 - state;
-  }
-  return state;
-};
-
-},{}],219:[function(require,module,exports){
-"use strict";
-
-var redux = require("redux");
 var nmap = require("nmap");
 var coin = require("../utils/coin");
 
@@ -65106,76 +65255,48 @@ var _require = require("../consts");
 var N = _require.N;
 
 
-var random = function random() {
+var rand = function rand() {
   return coin(0.1);
 };
-
-module.exports = redux.combineReducers(nmap(N, function (_, i) {
-  return redux.combineReducers(nmap(N, function (_, j) {
-    return redux.combineReducers(nmap(N, function (_, k) {
-      return function () {
-        var state = arguments.length <= 0 || arguments[0] === undefined ? random() : arguments[0];
-        var action = arguments[1];
-
-        if (action.type === "TOGGLE_MATRIX") {
-          if (action.i === i && action.j === j && action.k === k) {
-            return 1 - state;
-          }
-        }
-        if (action.type === "RANDOM") {
-          return random();
-        }
-        if (action.type === "CLEAR") {
-          return 0;
-        }
-        return state;
-      };
-    }));
-  }));
-}));
-
-},{"../consts":213,"../utils/coin":231,"nmap":34,"redux":193}],220:[function(require,module,exports){
-"use strict";
-
-var redux = require("redux");
-var selected = require("./selected");
-var state = require("./state");
-
-module.exports = redux.combineReducers({
-  selected: selected,
-  state: state
-});
-
-},{"./selected":221,"./state":222,"redux":193}],221:[function(require,module,exports){
-"use strict";
-
-var irand = require("../../utils/irand");
+var createMatrix = function createMatrix(fn) {
+  return nmap(N, function () {
+    return nmap(N, function () {
+      return nmap(N, fn);
+    });
+  });
+};
 
 module.exports = function () {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? irand(3) : arguments[0];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? createMatrix(rand) : arguments[0];
   var action = arguments[1];
 
-  if (action.type === "CHANGE_TRACK") {
-    return action.track;
+  if (action.type === "TOGGLE_MATRIX") {
+    state = JSON.parse(JSON.stringify(state));
+    state[action.i][action.j][action.k] = 1 - state[action.i][action.j][action.k];
+    return state;
   }
   if (action.type === "RANDOM") {
-    return irand(3);
+    return createMatrix(rand);
+  }
+  if (action.type === "CLEAR") {
+    return createMatrix(function () {
+      return 0;
+    });
   }
   return state;
 };
 
-},{"../../utils/irand":233}],222:[function(require,module,exports){
+},{"../consts":216,"../utils/coin":230,"nmap":34}],221:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var redux = require("redux");
-var irand = require("../../utils/irand");
-var sample = require("../../utils/sample");
+var irand = require("../utils/irand");
+var sample = require("../utils/sample");
 
-var _require = require("../../consts");
+var _require = require("../consts");
 
 var N = _require.N;
 
@@ -65183,29 +65304,27 @@ var N = _require.N;
 var pitchShift = [[1, 2, 2, 3], [0, 2, 4, 6], [5, 6, 7, 7]];
 var loopLength = [[3, 7, 7, 7], [1, 3, 3, 7], [3, 5, 7, 7]];
 var noteLength = [[1, 3, 3, 3], [0, 0, 0, 1], [3, 7, 7, 7]];
-var initTrackState = [{ track: 0, scene: irand(N), pitchShift: sample(pitchShift[0]), loopLength: sample(loopLength[0]), noteLength: sample(noteLength[0]), color: "#e74c3c" }, { track: 1, scene: irand(N), pitchShift: sample(pitchShift[1]), loopLength: sample(loopLength[1]), noteLength: sample(noteLength[1]), color: "#2ecc71" }, { track: 2, scene: irand(N), pitchShift: sample(pitchShift[2]), loopLength: sample(loopLength[2]), noteLength: sample(noteLength[2]), color: "#3498db" }];
+var randomState = function randomState(i) {
+  return { track: i, scene: irand(N), pitchShift: sample(pitchShift[i]), loopLength: sample(loopLength[i]), noteLength: sample(noteLength[i]) };
+};
+var initTrackState = [0, 1, 2].map(randomState);
 
-module.exports = redux.combineReducers([0, 1, 2].map(function (track) {
-  return function () {
-    var state = arguments.length <= 0 || arguments[0] === undefined ? initTrackState[track] : arguments[0];
-    var action = arguments[1];
+module.exports = function () {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initTrackState : arguments[0];
+  var action = arguments[1];
 
-    if (action.type === "UPDATE_STATE" && action.track === track) {
-      return _extends({}, state, _defineProperty({}, action.dataType, action.dataValue));
-    }
-    if (action.type === "RANDOM") {
-      return _extends({}, state, {
-        scene: irand(N),
-        pitchShift: sample(pitchShift[track]),
-        loopLength: sample(loopLength[track]),
-        noteLength: sample(noteLength[track])
-      });
-    }
+  if (action.type === "UPDATE_STATE") {
+    state = JSON.parse(JSON.stringify(state));
+    state[action.track] = _extends({}, state[action.track], _defineProperty({}, action.dataType, action.dataValue));
     return state;
-  };
-}));
+  }
+  if (action.type === "RANDOM") {
+    return [0, 1, 2].map(randomState);
+  }
+  return state;
+};
 
-},{"../../consts":213,"../../utils/irand":233,"../../utils/sample":236,"redux":193}],223:[function(require,module,exports){
+},{"../consts":216,"../utils/irand":232,"../utils/sample":235}],222:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65274,7 +65393,7 @@ var Sequencer = function (_events$EventEmitter) {
       this.bpm = BPM_MAP[state.master.bpm];
 
       this.tracks.forEach(function (track, i) {
-        var _state = state.track.state[i];
+        var _state = state.track[i];
         var matrix = rotate(pluck2D(state.matrix, i, _state.scene));
 
         track.update(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
@@ -65322,7 +65441,7 @@ function rotate(matrix) {
 
 module.exports = Sequencer;
 
-},{"../consts":213,"../utils/computeDurationFromBPM":232,"../utils/pluck2D":235,"./Track":224,"./createReverbBuffer":225,"./sounds":228,"./startWebAudioAPI":230,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],224:[function(require,module,exports){
+},{"../consts":216,"../utils/computeDurationFromBPM":231,"../utils/pluck2D":234,"./Track":223,"./createReverbBuffer":224,"./sounds":227,"./startWebAudioAPI":229,"events":1,"nmap":34,"web-audio-scheduler":199,"worker-timer":204}],223:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65418,7 +65537,7 @@ var Track = function (_events$EventEmitter) {
 
 module.exports = Track;
 
-},{"../consts":213,"../utils/computeDurationFromBPM":232,"events":1,"nmap":34}],225:[function(require,module,exports){
+},{"../consts":216,"../utils/computeDurationFromBPM":231,"events":1,"nmap":34}],224:[function(require,module,exports){
 "use strict";
 
 function createReverb(len) {
@@ -65445,7 +65564,7 @@ function createReverbBuffer(audioContext) {
 
 module.exports = createReverbBuffer;
 
-},{}],226:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 "use strict";
 
 var mtof = require("../../utils/mtof");
@@ -65473,7 +65592,7 @@ function beep(destination, playbackTime, noteNumber, duration) {
 
 module.exports = beep;
 
-},{"../../utils/mtof":234}],227:[function(require,module,exports){
+},{"../../utils/mtof":233}],226:[function(require,module,exports){
 "use strict";
 
 var mtof = require("../../utils/mtof");
@@ -65529,12 +65648,12 @@ function epiano(destination, playbackTime, noteNumber, duration) {
 
 module.exports = epiano;
 
-},{"../../utils/mtof":234}],228:[function(require,module,exports){
+},{"../../utils/mtof":233}],227:[function(require,module,exports){
 "use strict";
 
 module.exports = [require("./epiano"), require("./pad"), require("./beep")];
 
-},{"./beep":226,"./epiano":227,"./pad":229}],229:[function(require,module,exports){
+},{"./beep":225,"./epiano":226,"./pad":228}],228:[function(require,module,exports){
 "use strict";
 
 var mtof = require("../../utils/mtof");
@@ -65579,7 +65698,7 @@ function pad(destination, playbackTime, noteNumber, duration) {
 
 module.exports = pad;
 
-},{"../../utils/mtof":234}],230:[function(require,module,exports){
+},{"../../utils/mtof":233}],229:[function(require,module,exports){
 "use strict";
 
 function startWebAudioAPI(audioContext) {
@@ -65600,7 +65719,7 @@ function startWebAudioAPI(audioContext) {
 
 module.exports = startWebAudioAPI;
 
-},{}],231:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 "use strict";
 
 function coin(x) {
@@ -65609,7 +65728,7 @@ function coin(x) {
 
 module.exports = coin;
 
-},{}],232:[function(require,module,exports){
+},{}],231:[function(require,module,exports){
 "use strict";
 
 function computeDurationFromBPM(bpm) {
@@ -65620,7 +65739,7 @@ function computeDurationFromBPM(bpm) {
 
 module.exports = computeDurationFromBPM;
 
-},{}],233:[function(require,module,exports){
+},{}],232:[function(require,module,exports){
 "use strict";
 
 function irand(x) {
@@ -65629,7 +65748,7 @@ function irand(x) {
 
 module.exports = irand;
 
-},{}],234:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 "use strict";
 
 function mtof(m) {
@@ -65638,7 +65757,7 @@ function mtof(m) {
 
 module.exports = mtof;
 
-},{}],235:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65673,7 +65792,7 @@ function pluck2D(matrix, axis, $) {
 
 module.exports = pluck2D;
 
-},{"../consts":213,"nmap":34}],236:[function(require,module,exports){
+},{"../consts":216,"nmap":34}],235:[function(require,module,exports){
 "use strict";
 
 function sample(list) {
@@ -65682,7 +65801,7 @@ function sample(list) {
 
 module.exports = sample;
 
-},{}],237:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65695,6 +65814,7 @@ var nmap = require("nmap");
 var _require = require("../consts");
 
 var N = _require.N;
+var TRACK_COLORS = _require.TRACK_COLORS;
 
 var rotations = [new Float32Array([Math.PI / 2, -Math.PI / 2, 0]), new Float32Array([-Math.PI / 2, 0, Math.PI / 2]), new Float32Array([0, 0, 0])];
 var VIEW_ANGLE = 30;
@@ -65813,9 +65933,9 @@ var Viewer = function () {
     key: "update",
     value: function update(state) {
       var matrix = state.matrix;
-      var selected = state.track.selected;
-      var colors = [0, 1, 2].map(function (i) {
-        return new THREE.Color(state.track.state[i].color);
+      var selected = state.master.track;
+      var colors = TRACK_COLORS.map(function (color) {
+        return new THREE.Color(color);
       });
 
       this._state = state;
@@ -65828,7 +65948,7 @@ var Viewer = function () {
             var blend = 0;
             var opacity = matrix[i][j][k] ? 0.35 : 0.05;
 
-            if (i === state.track.state[0].scene && k <= state.track.state[0].loopLength) {
+            if (i === state.track[0].scene && k <= state.track[0].loopLength) {
               color.add(colors[0]);
               blend += 1;
               opacity *= 2;
@@ -65836,7 +65956,7 @@ var Viewer = function () {
                 opacity += 0.2;
               }
             }
-            if (j === state.track.state[1].scene && i <= state.track.state[1].loopLength) {
+            if (j === state.track[1].scene && i <= state.track[1].loopLength) {
               color.add(colors[1]);
               blend += 1;
               opacity *= 2;
@@ -65844,7 +65964,7 @@ var Viewer = function () {
                 opacity += 0.2;
               }
             }
-            if (k === state.track.state[2].scene && j <= state.track.state[2].loopLength) {
+            if (k === state.track[2].scene && j <= state.track[2].loopLength) {
               color.add(colors[2]);
               blend += 1;
               opacity *= 2;
@@ -65875,7 +65995,7 @@ function closeTo(a, b) {
 }
 
 function pluckRow(matrix, state, axis, index) {
-  var $ = state.track.state[axis].scene;
+  var $ = state.track[axis].scene;
 
   switch (axis) {
     case 0:
@@ -65897,4 +66017,4 @@ function pluckRow(matrix, state, axis, index) {
 
 module.exports = Viewer;
 
-},{"../consts":213,"nmap":34,"three":197}]},{},[214]);
+},{"../consts":216,"nmap":34,"three":198}]},{},[217]);

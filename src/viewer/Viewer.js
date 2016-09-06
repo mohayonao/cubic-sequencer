@@ -2,7 +2,7 @@
 
 const THREE = require("three");
 const nmap = require("nmap");
-const { N } = require("../consts");
+const { N, TRACK_COLORS } = require("../consts");
 const rotations = [
   new Float32Array([ Math.PI/2, -Math.PI/2, 0 ]),
   new Float32Array([-Math.PI/2, 0, Math.PI/2]),
@@ -110,8 +110,8 @@ class Viewer {
 
   update(state) {
     const matrix = state.matrix;
-    const selected = state.track.selected;
-    const colors = [ 0, 1, 2 ].map(i => new THREE.Color(state.track.state[i].color));
+    const selected = state.master.track;
+    const colors = TRACK_COLORS.map(color => new THREE.Color(color));
 
     this._state = state;
     this._rotation = rotations[selected];
@@ -123,7 +123,7 @@ class Viewer {
           let blend = 0;
           let opacity = matrix[i][j][k] ? 0.35 : 0.05;
 
-          if (i === state.track.state[0].scene && k <= state.track.state[0].loopLength) {
+          if (i === state.track[0].scene && k <= state.track[0].loopLength) {
             color.add(colors[0]);
             blend += 1;
             opacity *= 2;
@@ -131,7 +131,7 @@ class Viewer {
               opacity += 0.2;
             }
           }
-          if (j === state.track.state[1].scene && i <= state.track.state[1].loopLength) {
+          if (j === state.track[1].scene && i <= state.track[1].loopLength) {
             color.add(colors[1]);
             blend += 1;
             opacity *= 2;
@@ -139,7 +139,7 @@ class Viewer {
               opacity += 0.2;
             }
           }
-          if (k === state.track.state[2].scene && j <= state.track.state[2].loopLength) {
+          if (k === state.track[2].scene && j <= state.track[2].loopLength) {
             color.add(colors[2]);
             blend += 1;
             opacity *= 2;
@@ -167,7 +167,7 @@ function closeTo(a, b) {
 }
 
 function pluckRow(matrix, state, axis, index) {
-  const $ = state.track.state[axis].scene;
+  const $ = state.track[axis].scene;
 
   switch (axis) {
   case 0: return nmap(N, (_, i) => matrix[$][i][index]);

@@ -7,6 +7,6 @@ const track = require("./track");
 
 module.exports = redux.combineReducers({
   master: redux.combineReducers(master),
-  track: redux.combineReducers(track),
+  track,
   matrix,
 });
