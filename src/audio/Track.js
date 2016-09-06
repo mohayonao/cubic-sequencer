@@ -26,7 +26,7 @@ class Track extends events.EventEmitter {
     this.counter = 0;
   }
 
-  update(state) {
+  setState(state) {
     this.bpm = state.bpm;
     this.matrix = state.matrix;
     this.pitchShift = state.pitchShift;

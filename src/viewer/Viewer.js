@@ -3,10 +3,11 @@
 const THREE = require("three");
 const nmap = require("nmap");
 const { N, TRACK_COLORS } = require("../constants");
-const rotations = [
-  new Float32Array([ Math.PI/2, -Math.PI/2, 0 ]),
-  new Float32Array([-Math.PI/2, 0, Math.PI/2]),
-  new Float32Array([ 0, 0, 0 ]),
+
+const ROTATIONS = [
+  new THREE.Vector3( Math.PI/2, -Math.PI/2, 0),
+  new THREE.Vector3(-Math.PI/2, 0, Math.PI/2),
+  new THREE.Vector3(0, 0, 0),
 ];
 const VIEW_ANGLE = 30;
 
@@ -40,88 +41,51 @@ class Viewer {
     this.renderer.setSize(this.elem.offsetWidth, this.elem.offsetHeight);
     this.renderer.setClearColor(0x2c3e50);
 
-    this._scheds = [];
-    this._lookAt = [ [], [], [] ];
+    this._colors = TRACK_COLORS.map(color => new THREE.Color(color));
     this._state = null;
     this._updated = false;
-    this._rotation = rotations[0];
+    this._rotation = ROTATIONS[0];
 
     this.elem.appendChild(this.renderer.domElement);
   }
 
-  sched(data) {
-    this._scheds.push(data);
-  }
-
-  render(t) {
-    this.applyScheds(t);
+  render() {
     this.applyRotation();
-
     if (this._updated) {
-      this._updated = false;
       this.renderer.render(this.scene, this.camera);
+      this._updated = false;
     }
-  }
-
-  applyScheds(t) {
-    let i = 0;
-
-    for (let imax = this._scheds.length; i < imax; i++) {
-      const sched = this._scheds[i];
-
-      if (t < sched.platbackTime) {
-        break;
-      }
-
-      this._lookAt[sched.track].forEach((mesh) => {
-        mesh.userData.focus -= 1;
-        if (mesh.userData.focus === 0) {
-          mesh.scale.setScalar(1);
-        }
-      });
-      this._lookAt[sched.track] = pluckRow(this.matrix, this._state, sched.track, sched.index).map((mesh) => {
-        mesh.userData.focus += 1;
-        mesh.scale.setScalar(1.75);
-        return mesh;
-      });
-
-      this._updated = true;
-    }
-    this._shceds = this._scheds.splice(0, i);
   }
 
   applyRotation() {
-    const x0 = this.group.rotation.x;
-    const y0 = this.group.rotation.y;
-    const z0 = this.group.rotation.z;
-    const x1 = this._rotation[0];
-    const y1 = this._rotation[1];
-    const z1 = this._rotation[2];
-
-    if (!closeTo(x0, x1) || !closeTo(y0, y1) || !closeTo(z0, z1)) {
-      const x = x0 * 0.9 + x1 * 0.1;
-      const y = y0 * 0.9 + y1 * 0.1;
-      const z = z0 * 0.9 + z1 * 0.1;
-
-      this.group.rotation.set(x, y, z);
-      this._updated = true;
+    if (closeTo(this.group.rotation, this._rotation)) {
+      return;
     }
+    this.group.rotation.set(
+      this.group.rotation.x * 0.9 + this._rotation.x * 0.1,
+      this.group.rotation.y * 0.9 + this._rotation.y * 0.1,
+      this.group.rotation.z * 0.9 + this._rotation.z * 0.1
+    );
+    this._updated = true;
   }
 
-  update(state) {
-    const matrix = state.matrix;
-    const selected = state.master.track;
-    const colors = TRACK_COLORS.map(color => new THREE.Color(color));
+  setState(state) {
+    const { master, matrix } = state;
+    const selected = master.track;
+    const colors = this._colors;
 
     this._state = state;
-    this._rotation = rotations[selected];
+    this._rotation = ROTATIONS[selected];
 
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
         for (let k = 0; k < N; k++) {
+          const mesh = this.matrix[i][j][k];
+
           let color = new THREE.Color(0, 0, 0);
-          let blend = 0;
           let opacity = matrix[i][j][k] ? 0.35 : 0.05;
+          let scale = 1;
+          let blend = 0;
 
           if (i === state.track[0].scene && k <= state.track[0].loopLength) {
             color.add(colors[0]);
@@ -129,6 +93,9 @@ class Viewer {
             opacity *= 2;
             if (selected === 0) {
               opacity += 0.2;
+            }
+            if (k === state.ticks[0]) {
+              scale = 1.75;
             }
           }
           if (j === state.track[1].scene && i <= state.track[1].loopLength) {
@@ -138,6 +105,9 @@ class Viewer {
             if (selected === 1) {
               opacity += 0.2;
             }
+            if (i === state.ticks[1]) {
+              scale = 1.75;
+            }
           }
           if (k === state.track[2].scene && j <= state.track[2].loopLength) {
             color.add(colors[2]);
@@ -146,14 +116,18 @@ class Viewer {
             if (selected === 2) {
               opacity += 0.2;
             }
+            if (j === state.ticks[2]) {
+              scale = 1.75;
+            }
           }
 
           if (blend === 0) {
             color.set(0x7f8c8d);
           }
 
-          this.matrix[i][j][k].material.color = color;
-          this.matrix[i][j][k].material.opacity = opacity;
+          mesh.material.color = color;
+          mesh.material.opacity = opacity;
+          mesh.scale.setScalar(scale);
         }
       }
     }
@@ -163,19 +137,7 @@ class Viewer {
 }
 
 function closeTo(a, b) {
-  return Math.abs(a - b) < 1e-6;
-}
-
-function pluckRow(matrix, state, axis, index) {
-  const $ = state.track[axis].scene;
-
-  switch (axis) {
-  case 0: return nmap(N, (_, i) => matrix[$][i][index]);
-  case 1: return nmap(N, (_, i) => matrix[index][$][i]);
-  case 2: return nmap(N, (_, i) => matrix[i][index][$]);
-  }
-
-  return [];
+  return (Math.abs(a.x - b.x) < 1e-6) && (Math.abs(a.z - b.z) < 1e-6) && (Math.abs(a.z - b.z) < 1e-6);
 }
 
 module.exports = Viewer;

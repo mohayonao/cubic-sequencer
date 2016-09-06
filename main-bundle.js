@@ -64580,6 +64580,9 @@ module.exports = {
   random: function random() {
     return { type: types.RANDOM };
   },
+  tickSequencer: function tickSequencer(playbackTime, track, index) {
+    return { type: types.TICK_SEQUENCER, track: track, index: index };
+  },
   toggleMatrix: function toggleMatrix(i, j, k) {
     return { type: types.TOGGLE_MATRIX, i: i, j: j, k: k };
   },
@@ -64657,8 +64660,8 @@ var Sequencer = function (_events$EventEmitter) {
   }
 
   _createClass(Sequencer, [{
-    key: "update",
-    value: function update(state) {
+    key: "setState",
+    value: function setState(state) {
       var _this2 = this;
 
       this.bpm = BPM_MAP[state.master.bpm];
@@ -64667,7 +64670,7 @@ var Sequencer = function (_events$EventEmitter) {
         var _state = state.track[i];
         var matrix = rotate(pluck2D(state.matrix, i, _state.scene));
 
-        track.update(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
+        track.setState(_extends({}, _state, { matrix: matrix, bpm: _this2.bpm }));
       });
 
       this.play(state.master.play);
@@ -64704,7 +64707,7 @@ var Sequencer = function (_events$EventEmitter) {
 
 module.exports = Sequencer;
 
-},{"../constants":219,"../utils/matrix":226,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
+},{"../constants":219,"../utils/matrix":228,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64758,8 +64761,8 @@ var Track = function (_events$EventEmitter) {
   }
 
   _createClass(Track, [{
-    key: "update",
-    value: function update(state) {
+    key: "setState",
+    value: function setState(state) {
       this.bpm = state.bpm;
       this.matrix = state.matrix;
       this.pitchShift = state.pitchShift;
@@ -65403,7 +65406,7 @@ function to3DIndex(track, scene, row, col) {
 
 module.exports = TrackCtrl;
 
-},{"../constants":219,"../utils/matrix":226,"./LabeledMatrixCtrl":214,"nmap":34,"react":187}],218:[function(require,module,exports){
+},{"../constants":219,"../utils/matrix":228,"./LabeledMatrixCtrl":214,"nmap":34,"react":187}],218:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65411,6 +65414,7 @@ module.exports = {
   CHANGE_TRACK: "CHANGE_TRACK",
   CLEAR: "CLEAR",
   RANDOM: "RANDOM",
+  TICK_SEQUENCER: "TICK_SEQUENCER",
   TOGGLE_MATRIX: "TOGGLE_MATRIX",
   TOGGLE_PLAY: "TOGGLE_PLAY",
   UPDATE_STATE: "UPDATE_STATE"
@@ -65513,38 +65517,45 @@ var _require = require("react-redux");
 
 var Provider = _require.Provider;
 
+var audioTimeline = require("./middlewares/audio-timeline");
 var App = require("./containers/App");
 var Viewer = require("./viewer/Viewer");
 var Sequencer = require("./audio/Sequencer");
-var app = require("./reducers");
+var reducers = require("./reducers");
+var actions = require("./actions");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 window.addEventListener("DOMContentLoaded", function () {
-  var store = redux.createStore(app);
   var audioContext = new AudioContext();
   var sequencer = new Sequencer(audioContext);
+  var timeline = audioTimeline(audioContext);
   var viewer = new Viewer(document.getElementById("viewer"));
+  var store = redux.createStore(reducers, redux.applyMiddleware(timeline));
+  var initState = store.getState();
 
-  function updateState() {
-    var state = store.getState();
-
-    sequencer.update(state);
-    viewer.update(state);
-  }
+  sequencer.setState(initState);
+  viewer.setState(initState);
 
   function animate() {
-    viewer.render(audioContext.currentTime);
+    timeline.process();
+    viewer.render();
     requestAnimationFrame(animate);
   }
 
-  sequencer.on("tick", function (e) {
-    viewer.sched(e);
+  sequencer.on("tick", function (_ref) {
+    var playbackTime = _ref.playbackTime;
+    var track = _ref.track;
+    var index = _ref.index;
+
+    store.dispatch(actions.tickSequencer(playbackTime, track, index));
+  });
+  store.subscribe(function () {
+    var state = store.getState();
+    sequencer.setState(state);
+    viewer.setState(state);
   });
 
-  store.subscribe(updateState);
-
-  updateState();
   requestAnimationFrame(animate);
 
   ReactDom.render(React.createElement(
@@ -65554,21 +65565,69 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./audio/Sequencer":205,"./containers/App":220,"./reducers":222,"./viewer/Viewer":228,"react":187,"react-dom":37,"react-redux":40,"redux":193}],222:[function(require,module,exports){
+},{"./actions":204,"./audio/Sequencer":205,"./containers/App":220,"./middlewares/audio-timeline":222,"./reducers":223,"./viewer/Viewer":230,"react":187,"react-dom":37,"react-redux":40,"redux":193}],222:[function(require,module,exports){
+"use strict";
+
+var ACTION_TYPE_EMIT = "@@audio-timeline/EMIT";
+
+function audioTimeline(audioContext) {
+  var _scheds = [];
+  var _store = null;
+
+  var middleware = function middleware(store) {
+    _store = store;
+    return function (next) {
+      return function (action) {
+        if (action.type === ACTION_TYPE_EMIT) {
+          return next(action.action);
+        }
+        if (typeof action.playbackTime !== "number") {
+          return next(action);
+        }
+        _scheds.push(action);
+      };
+    };
+  };
+
+  middleware.process = function () {
+    var pendingScheds = [];
+    var time = audioContext.currentTime;
+
+    for (var i = 0, imax = _scheds.length; i < imax; i++) {
+      var action = _scheds[i];
+
+      if (action.playbackTime < time) {
+        _store.dispatch({ type: ACTION_TYPE_EMIT, action: action });
+      } else {
+        pendingScheds.push(action);
+      }
+    }
+
+    _scheds = pendingScheds;
+  };
+
+  return middleware;
+}
+
+module.exports = audioTimeline;
+
+},{}],223:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
 var master = require("./master");
 var matrix = require("./matrix");
+var ticks = require("./ticks");
 var track = require("./track");
 
 module.exports = redux.combineReducers({
   master: redux.combineReducers(master),
-  track: track,
-  matrix: matrix
+  matrix: matrix,
+  ticks: ticks,
+  track: track
 });
 
-},{"./master":223,"./matrix":224,"./track":225,"redux":193}],223:[function(require,module,exports){
+},{"./master":224,"./matrix":225,"./ticks":226,"./track":227,"redux":193}],224:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -65614,7 +65673,7 @@ module.exports = {
   }
 };
 
-},{"../constants/ActionTypes":218,"../utils/random":227}],224:[function(require,module,exports){
+},{"../constants/ActionTypes":218,"../utils/random":229}],225:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65660,7 +65719,24 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":227,"nmap":34}],225:[function(require,module,exports){
+},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":229,"nmap":34}],226:[function(require,module,exports){
+"use strict";
+
+var types = require("../constants/ActionTypes");
+
+module.exports = function () {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [-1, -1, -1] : arguments[0];
+  var action = arguments[1];
+
+  if (action.type === types.TICK_SEQUENCER) {
+    state = state.slice();
+    state[action.track] = action.index;
+    return state;
+  }
+  return state;
+};
+
+},{"../constants/ActionTypes":218}],227:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65702,7 +65778,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":227}],226:[function(require,module,exports){
+},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":229}],228:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65744,7 +65820,7 @@ module.exports = {
   }
 };
 
-},{"../constants":219,"nmap":34}],227:[function(require,module,exports){
+},{"../constants":219,"nmap":34}],229:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65762,7 +65838,7 @@ module.exports = {
   }
 };
 
-},{}],228:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65777,7 +65853,8 @@ var _require = require("../constants");
 var N = _require.N;
 var TRACK_COLORS = _require.TRACK_COLORS;
 
-var rotations = [new Float32Array([Math.PI / 2, -Math.PI / 2, 0]), new Float32Array([-Math.PI / 2, 0, Math.PI / 2]), new Float32Array([0, 0, 0])];
+
+var ROTATIONS = [new THREE.Vector3(Math.PI / 2, -Math.PI / 2, 0), new THREE.Vector3(-Math.PI / 2, 0, Math.PI / 2), new THREE.Vector3(0, 0, 0)];
 var VIEW_ANGLE = 30;
 
 var Viewer = function () {
@@ -65818,96 +65895,55 @@ var Viewer = function () {
     this.renderer.setSize(this.elem.offsetWidth, this.elem.offsetHeight);
     this.renderer.setClearColor(0x2c3e50);
 
-    this._scheds = [];
-    this._lookAt = [[], [], []];
+    this._colors = TRACK_COLORS.map(function (color) {
+      return new THREE.Color(color);
+    });
     this._state = null;
     this._updated = false;
-    this._rotation = rotations[0];
+    this._rotation = ROTATIONS[0];
 
     this.elem.appendChild(this.renderer.domElement);
   }
 
   _createClass(Viewer, [{
-    key: "sched",
-    value: function sched(data) {
-      this._scheds.push(data);
-    }
-  }, {
     key: "render",
-    value: function render(t) {
-      this.applyScheds(t);
+    value: function render() {
       this.applyRotation();
-
       if (this._updated) {
-        this._updated = false;
         this.renderer.render(this.scene, this.camera);
+        this._updated = false;
       }
-    }
-  }, {
-    key: "applyScheds",
-    value: function applyScheds(t) {
-      var i = 0;
-
-      for (var imax = this._scheds.length; i < imax; i++) {
-        var sched = this._scheds[i];
-
-        if (t < sched.platbackTime) {
-          break;
-        }
-
-        this._lookAt[sched.track].forEach(function (mesh) {
-          mesh.userData.focus -= 1;
-          if (mesh.userData.focus === 0) {
-            mesh.scale.setScalar(1);
-          }
-        });
-        this._lookAt[sched.track] = pluckRow(this.matrix, this._state, sched.track, sched.index).map(function (mesh) {
-          mesh.userData.focus += 1;
-          mesh.scale.setScalar(1.75);
-          return mesh;
-        });
-
-        this._updated = true;
-      }
-      this._shceds = this._scheds.splice(0, i);
     }
   }, {
     key: "applyRotation",
     value: function applyRotation() {
-      var x0 = this.group.rotation.x;
-      var y0 = this.group.rotation.y;
-      var z0 = this.group.rotation.z;
-      var x1 = this._rotation[0];
-      var y1 = this._rotation[1];
-      var z1 = this._rotation[2];
-
-      if (!closeTo(x0, x1) || !closeTo(y0, y1) || !closeTo(z0, z1)) {
-        var x = x0 * 0.9 + x1 * 0.1;
-        var y = y0 * 0.9 + y1 * 0.1;
-        var z = z0 * 0.9 + z1 * 0.1;
-
-        this.group.rotation.set(x, y, z);
-        this._updated = true;
+      if (closeTo(this.group.rotation, this._rotation)) {
+        return;
       }
+      this.group.rotation.set(this.group.rotation.x * 0.9 + this._rotation.x * 0.1, this.group.rotation.y * 0.9 + this._rotation.y * 0.1, this.group.rotation.z * 0.9 + this._rotation.z * 0.1);
+      this._updated = true;
     }
   }, {
-    key: "update",
-    value: function update(state) {
+    key: "setState",
+    value: function setState(state) {
+      var master = state.master;
       var matrix = state.matrix;
-      var selected = state.master.track;
-      var colors = TRACK_COLORS.map(function (color) {
-        return new THREE.Color(color);
-      });
+
+      var selected = master.track;
+      var colors = this._colors;
 
       this._state = state;
-      this._rotation = rotations[selected];
+      this._rotation = ROTATIONS[selected];
 
       for (var i = 0; i < N; i++) {
         for (var j = 0; j < N; j++) {
           for (var k = 0; k < N; k++) {
+            var mesh = this.matrix[i][j][k];
+
             var color = new THREE.Color(0, 0, 0);
-            var blend = 0;
             var opacity = matrix[i][j][k] ? 0.35 : 0.05;
+            var scale = 1;
+            var blend = 0;
 
             if (i === state.track[0].scene && k <= state.track[0].loopLength) {
               color.add(colors[0]);
@@ -65915,6 +65951,9 @@ var Viewer = function () {
               opacity *= 2;
               if (selected === 0) {
                 opacity += 0.2;
+              }
+              if (k === state.ticks[0]) {
+                scale = 1.75;
               }
             }
             if (j === state.track[1].scene && i <= state.track[1].loopLength) {
@@ -65924,6 +65963,9 @@ var Viewer = function () {
               if (selected === 1) {
                 opacity += 0.2;
               }
+              if (i === state.ticks[1]) {
+                scale = 1.75;
+              }
             }
             if (k === state.track[2].scene && j <= state.track[2].loopLength) {
               color.add(colors[2]);
@@ -65932,14 +65974,18 @@ var Viewer = function () {
               if (selected === 2) {
                 opacity += 0.2;
               }
+              if (j === state.ticks[2]) {
+                scale = 1.75;
+              }
             }
 
             if (blend === 0) {
               color.set(0x7f8c8d);
             }
 
-            this.matrix[i][j][k].material.color = color;
-            this.matrix[i][j][k].material.opacity = opacity;
+            mesh.material.color = color;
+            mesh.material.opacity = opacity;
+            mesh.scale.setScalar(scale);
           }
         }
       }
@@ -65952,28 +65998,7 @@ var Viewer = function () {
 }();
 
 function closeTo(a, b) {
-  return Math.abs(a - b) < 1e-6;
-}
-
-function pluckRow(matrix, state, axis, index) {
-  var $ = state.track[axis].scene;
-
-  switch (axis) {
-    case 0:
-      return nmap(N, function (_, i) {
-        return matrix[$][i][index];
-      });
-    case 1:
-      return nmap(N, function (_, i) {
-        return matrix[index][$][i];
-      });
-    case 2:
-      return nmap(N, function (_, i) {
-        return matrix[i][index][$];
-      });
-  }
-
-  return [];
+  return Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.z - b.z) < 1e-6 && Math.abs(a.z - b.z) < 1e-6;
 }
 
 module.exports = Viewer;

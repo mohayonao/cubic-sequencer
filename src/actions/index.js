@@ -15,6 +15,9 @@ module.exports = {
   random() {
     return { type: types.RANDOM };
   },
+  tickSequencer(playbackTime, track, index) {
+    return { type: types.TICK_SEQUENCER, track, index };
+  },
   toggleMatrix(i, j, k) {
     return { type: types.TOGGLE_MATRIX, i, j, k };
   },

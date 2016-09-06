@@ -35,14 +35,14 @@ class Sequencer extends events.EventEmitter {
     this.sequence = this.sequence.bind(this);
   }
 
-  update(state) {
+  setState(state) {
     this.bpm = BPM_MAP[state.master.bpm];
 
     this.tracks.forEach((track, i) => {
       const _state = state.track[i];
       const matrix = rotate(pluck2D(state.matrix, i, _state.scene));
 
-      track.update({ ..._state, matrix, bpm: this.bpm });
+      track.setState({ ..._state, matrix, bpm: this.bpm });
     });
 
     this.play(state.master.play);
