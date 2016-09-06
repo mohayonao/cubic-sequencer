@@ -10,8 +10,7 @@ const createReverbBuffer = require("./utils/createReverbBuffer");
 const startWebAudioAPI = require("./utils/startWebAudioAPI");
 const { pluck2D, rotate } = require("../utils/matrix");
 const { computeDurationFromBPM } = require("./utils");
-
-const BPM_MAP = [ 120, 140, 160 ];
+const { BPM_MAP } = require("../constants");
 
 class Sequencer extends events.EventEmitter {
   constructor(audioContext) {

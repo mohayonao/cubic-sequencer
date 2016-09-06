@@ -64,17 +64,3 @@ h3 {
   border: solid 1px #7f8c8d;
   cursor: pointer;
 }
-
-.track-selector {
-  list-style: none;
-}
-
-.track-selector li {
-  display: inline-block;
-  width: 63px;
-  height: 23px;
-  margin: 0 1px 1px 0;
-  border: solid 1px #7f8c8d;
-  text-align: center;
-  cursor: pointer;
-}

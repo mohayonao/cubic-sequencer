@@ -64591,7 +64591,7 @@ module.exports = {
   }
 };
 
-},{"../constants/ActionTypes":217}],205:[function(require,module,exports){
+},{"../constants/ActionTypes":218}],205:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -64622,8 +64622,9 @@ var _require2 = require("./utils");
 
 var computeDurationFromBPM = _require2.computeDurationFromBPM;
 
+var _require3 = require("../constants");
 
-var BPM_MAP = [120, 140, 160];
+var BPM_MAP = _require3.BPM_MAP;
 
 var Sequencer = function (_events$EventEmitter) {
   _inherits(Sequencer, _events$EventEmitter);
@@ -64703,7 +64704,7 @@ var Sequencer = function (_events$EventEmitter) {
 
 module.exports = Sequencer;
 
-},{"../utils/matrix":225,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
+},{"../constants":219,"../utils/matrix":226,"./Track":206,"./sounds":209,"./utils":212,"./utils/createReverbBuffer":211,"./utils/startWebAudioAPI":213,"events":1,"nmap":34,"web-audio-scheduler":198,"worker-timer":203}],206:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -64802,7 +64803,7 @@ var Track = function (_events$EventEmitter) {
 
 module.exports = Track;
 
-},{"../constants":218,"./utils":212,"events":1,"nmap":34}],207:[function(require,module,exports){
+},{"../constants":219,"./utils":212,"events":1,"nmap":34}],207:[function(require,module,exports){
 "use strict";
 
 var _require = require("../utils");
@@ -65018,13 +65019,73 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var nmap = require("nmap");
 var React = require("react");
 var MatrixCtrl = require("./MatrixCtrl");
 
+var LabeledMatrixCtrl = function (_React$Component) {
+  _inherits(LabeledMatrixCtrl, _React$Component);
+
+  function LabeledMatrixCtrl() {
+    _classCallCheck(this, LabeledMatrixCtrl);
+
+    return _possibleConstructorReturn(this, (LabeledMatrixCtrl.__proto__ || Object.getPrototypeOf(LabeledMatrixCtrl)).apply(this, arguments));
+  }
+
+  _createClass(LabeledMatrixCtrl, [{
+    key: "render",
+    value: function render() {
+      var _props = this.props;
+      var label = _props.label;
+      var data = _props.data;
+      var color = _props.color;
+      var action = _props.action;
+
+      return React.createElement(
+        "div",
+        null,
+        React.createElement(
+          "h2",
+          null,
+          label.toUpperCase(),
+          ":"
+        ),
+        React.createElement(MatrixCtrl, { data: data, color: color, onCellClick: action })
+      );
+    }
+  }]);
+
+  return LabeledMatrixCtrl;
+}(React.Component);
+
+LabeledMatrixCtrl.propTypes = {
+  label: React.PropTypes.string.isRequired,
+  data: React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)).isRequired,
+  color: React.PropTypes.string,
+  action: React.PropTypes.func
+};
+
+
+module.exports = LabeledMatrixCtrl;
+
+},{"./MatrixCtrl":216,"react":187}],215:[function(require,module,exports){
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var React = require("react");
+var LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
+
 var _require = require("../constants");
 
-var DEFAULT_COLOR = _require.DEFAULT_COLOR;
+var BPM_MAP = _require.BPM_MAP;
+var EMPTY_COLOR = _require.EMPTY_COLOR;
+var MASTER_COLOR = _require.MASTER_COLOR;
 var TRACK_COLORS = _require.TRACK_COLORS;
 
 var MasterCtrl = function (_React$Component) {
@@ -65037,80 +65098,52 @@ var MasterCtrl = function (_React$Component) {
   }
 
   _createClass(MasterCtrl, [{
-    key: "ctrlApp",
-    value: function ctrlApp() {
-      var actions = this.props.actions;
-
-      var actionList = [actions.togglePlay, actions.random, actions.clear];
-      return function (e) {
-        actionList[e.col]();
-      };
-    }
-  }, {
-    key: "changeBPM",
-    value: function changeBPM() {
-      var actions = this.props.actions;
-
-      return function (e) {
-        actions.changeBPM(e.col);
-      };
-    }
-  }, {
-    key: "changeTrack",
-    value: function changeTrack() {
-      var actions = this.props.actions;
-
-      return function (e) {
-        actions.changeTrack(e.col);
-      };
-    }
-  }, {
     key: "render",
     value: function render() {
-      var master = this.props.master;
+      var _props = this.props;
+      var actions = _props.actions;
+      var master = _props.master;
 
       var playMat = [[master.play, 0, 0]];
-      var bpmMat = [nmap(3, function (_, i) {
+      var bpmMat = [BPM_MAP.map(function (_, i) {
         return i === master.bpm ? 1 : 0;
       })];
       var axisMat = [TRACK_COLORS.map(function (_, i) {
         return master.track === i ? i + 1 : 0;
       })];
-      var axisColor = DEFAULT_COLOR + ";" + TRACK_COLORS.join(";");
+      var axisColor = EMPTY_COLOR + ";" + TRACK_COLORS.join(";");
+      var masterColor = EMPTY_COLOR + ";" + MASTER_COLOR;
+      var masterCtrl = function masterCtrl() {
+        return function (_ref) {
+          var col = _ref.col;
+
+          [actions.togglePlay, actions.random, actions.clear][col]();
+        };
+      };
+      var changeBPM = function changeBPM() {
+        return function (_ref2) {
+          var col = _ref2.col;
+
+          actions.changeBPM(col);
+        };
+      };
+      var changeTrack = function changeTrack() {
+        return function (_ref3) {
+          var col = _ref3.col;
+
+          actions.changeTrack(col);
+        };
+      };
 
       return React.createElement(
         "div",
         null,
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "PLY/RND/CLR:"
-          ),
-          React.createElement(MatrixCtrl, { data: playMat, color: "#ecf0f1;#f1c40f", onCellClick: this.ctrlApp() })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "BPM:"
-          ),
-          React.createElement(MatrixCtrl, { data: bpmMat, color: "#ecf0f1;#f1c40f", onCellClick: this.changeBPM() })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "AXIS:"
-          ),
-          React.createElement(MatrixCtrl, { data: axisMat, color: axisColor, onCellClick: this.changeTrack() })
-        )
+        React.createElement(LabeledMatrixCtrl, { label: "ply/rnd/clr",
+          data: playMat, color: masterColor, action: masterCtrl() }),
+        React.createElement(LabeledMatrixCtrl, { label: "bpm",
+          data: bpmMat, color: masterColor, action: changeBPM() }),
+        React.createElement(LabeledMatrixCtrl, { label: "axis",
+          data: axisMat, color: axisColor, action: changeTrack() })
       );
     }
   }]);
@@ -65126,7 +65159,7 @@ MasterCtrl.propTypes = {
 
 module.exports = MasterCtrl;
 
-},{"../constants":218,"./MatrixCtrl":215,"nmap":34,"react":187}],215:[function(require,module,exports){
+},{"../constants":219,"./LabeledMatrixCtrl":214,"react":187}],216:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65257,7 +65290,7 @@ MatrixCtrlCell.propTypes = {
 
 module.exports = MatrixCtrl;
 
-},{"react":187}],216:[function(require,module,exports){
+},{"react":187}],217:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65272,7 +65305,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var nmap = require("nmap");
 var React = require("react");
-var MatrixCtrl = require("./MatrixCtrl");
+var LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
 
 var _require = require("../utils/matrix");
 
@@ -65281,7 +65314,7 @@ var pluck2D = _require.pluck2D;
 var _require2 = require("../constants");
 
 var N = _require2.N;
-var DEFAULT_COLOR = _require2.DEFAULT_COLOR;
+var EMPTY_COLOR = _require2.EMPTY_COLOR;
 var TRACK_COLORS = _require2.TRACK_COLORS;
 
 var TrackCtrl = function (_React$Component) {
@@ -65294,34 +65327,12 @@ var TrackCtrl = function (_React$Component) {
   }
 
   _createClass(TrackCtrl, [{
-    key: "updateState",
-    value: function updateState(dataType) {
+    key: "render",
+    value: function render() {
       var _props = this.props;
       var actions = _props.actions;
       var track = _props.track;
-
-      return function (e) {
-        actions.updateState(track, dataType, e.col);
-      };
-    }
-  }, {
-    key: "updateMatrix",
-    value: function updateMatrix() {
-      var _props2 = this.props;
-      var actions = _props2.actions;
-      var track = _props2.track;
-      var state = _props2.state;
-
-      return function (e) {
-        actions.toggleMatrix.apply(actions, _toConsumableArray(to3DIndex(track, state.scene, e.row, e.col)));
-      };
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var _props3 = this.props;
-      var track = _props3.track;
-      var state = _props3.state;
+      var state = _props.state;
 
       var pitchShiftMat = [nmap(N, function (_, i) {
         return i === state.pitchShift ? 1 : 0;
@@ -65336,61 +65347,34 @@ var TrackCtrl = function (_React$Component) {
         return i === state.scene ? 1 : 0;
       })];
       var matrix = pluck2D(this.props.matrix, track, state.scene);
-      var ctrlColor = DEFAULT_COLOR + ";" + TRACK_COLORS[track];
+      var ctrlColor = EMPTY_COLOR + ";" + TRACK_COLORS[track];
+      var updateState = function updateState(dataType) {
+        return function (e) {
+          actions.updateState(track, dataType, e.col);
+        };
+      };
+      var updateMatrix = function updateMatrix() {
+        return function (_ref) {
+          var row = _ref.row;
+          var col = _ref.col;
+
+          actions.toggleMatrix.apply(actions, _toConsumableArray(to3DIndex(track, state.scene, row, col)));
+        };
+      };
 
       return React.createElement(
         "div",
         null,
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "PITCH SHIFT:"
-          ),
-          React.createElement(MatrixCtrl, { data: pitchShiftMat, color: ctrlColor, onCellClick: this.updateState("pitchShift") })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "LOOP LENGTH:"
-          ),
-          React.createElement(MatrixCtrl, { data: loopLengthMat, color: ctrlColor, onCellClick: this.updateState("loopLength") })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "NOTE LENGTH:"
-          ),
-          React.createElement(MatrixCtrl, { data: noteLengthMat, color: ctrlColor, onCellClick: this.updateState("noteLength") })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "SCENE:"
-          ),
-          React.createElement(MatrixCtrl, { data: sceneMat, color: ctrlColor, onCellClick: this.updateState("scene") })
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement(
-            "h2",
-            null,
-            "MATRIX:"
-          ),
-          React.createElement(MatrixCtrl, { data: matrix, color: ctrlColor, onCellClick: this.updateMatrix() })
-        )
+        React.createElement(LabeledMatrixCtrl, { label: "pitch shift",
+          data: pitchShiftMat, color: ctrlColor, action: updateState("pitchShift") }),
+        React.createElement(LabeledMatrixCtrl, { label: "loop length",
+          data: loopLengthMat, color: ctrlColor, action: updateState("loopLength") }),
+        React.createElement(LabeledMatrixCtrl, { label: "note length",
+          data: noteLengthMat, color: ctrlColor, action: updateState("noteLength") }),
+        React.createElement(LabeledMatrixCtrl, { label: "scene",
+          data: sceneMat, color: ctrlColor, action: updateState("scene") }),
+        React.createElement(LabeledMatrixCtrl, { label: "matrix",
+          data: matrix, color: ctrlColor, action: updateMatrix() })
       );
     }
   }]);
@@ -65419,7 +65403,7 @@ function to3DIndex(track, scene, row, col) {
 
 module.exports = TrackCtrl;
 
-},{"../constants":218,"../utils/matrix":225,"./MatrixCtrl":215,"nmap":34,"react":187}],217:[function(require,module,exports){
+},{"../constants":219,"../utils/matrix":226,"./LabeledMatrixCtrl":214,"nmap":34,"react":187}],218:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65432,16 +65416,18 @@ module.exports = {
   UPDATE_STATE: "UPDATE_STATE"
 };
 
-},{}],218:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 "use strict";
 
 module.exports = {
   N: 8,
-  DEFAULT_COLOR: "#ecf0f1",
+  BPM_MAP: [120, 140, 160],
+  EMPTY_COLOR: "#ecf0f1",
+  MASTER_COLOR: "#f1c40f",
   TRACK_COLORS: ["#e74c3c", "#2ecc71", "#3498db"]
 };
 
-},{}],219:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65516,7 +65502,7 @@ function mapDispatchToProps(dispatch) {
 
 module.exports = connect(mapStateToProps, mapDispatchToProps)(App);
 
-},{"../actions":204,"../components/MasterCtrl":214,"../components/TrackCtrl":216,"react":187,"react-redux":40,"redux":193}],220:[function(require,module,exports){
+},{"../actions":204,"../components/MasterCtrl":215,"../components/TrackCtrl":217,"react":187,"react-redux":40,"redux":193}],221:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
@@ -65568,7 +65554,7 @@ window.addEventListener("DOMContentLoaded", function () {
   ), document.getElementById("app"));
 });
 
-},{"./audio/Sequencer":205,"./containers/App":219,"./reducers":221,"./viewer/Viewer":227,"react":187,"react-dom":37,"react-redux":40,"redux":193}],221:[function(require,module,exports){
+},{"./audio/Sequencer":205,"./containers/App":220,"./reducers":222,"./viewer/Viewer":228,"react":187,"react-dom":37,"react-redux":40,"redux":193}],222:[function(require,module,exports){
 "use strict";
 
 var redux = require("redux");
@@ -65582,7 +65568,7 @@ module.exports = redux.combineReducers({
   matrix: matrix
 });
 
-},{"./master":222,"./matrix":223,"./track":224,"redux":193}],222:[function(require,module,exports){
+},{"./master":223,"./matrix":224,"./track":225,"redux":193}],223:[function(require,module,exports){
 "use strict";
 
 var types = require("../constants/ActionTypes");
@@ -65628,7 +65614,7 @@ module.exports = {
   }
 };
 
-},{"../constants/ActionTypes":217,"../utils/random":226}],223:[function(require,module,exports){
+},{"../constants/ActionTypes":218,"../utils/random":227}],224:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65674,7 +65660,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":218,"../constants/ActionTypes":217,"../utils/random":226,"nmap":34}],224:[function(require,module,exports){
+},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":227,"nmap":34}],225:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -65716,7 +65702,7 @@ module.exports = function () {
   return state;
 };
 
-},{"../constants":218,"../constants/ActionTypes":217,"../utils/random":226}],225:[function(require,module,exports){
+},{"../constants":219,"../constants/ActionTypes":218,"../utils/random":227}],226:[function(require,module,exports){
 "use strict";
 
 var nmap = require("nmap");
@@ -65758,7 +65744,7 @@ module.exports = {
   }
 };
 
-},{"../constants":218,"nmap":34}],226:[function(require,module,exports){
+},{"../constants":219,"nmap":34}],227:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -65776,7 +65762,7 @@ module.exports = {
   }
 };
 
-},{}],227:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -65992,4 +65978,4 @@ function pluckRow(matrix, state, axis, index) {
 
 module.exports = Viewer;
 
-},{"../constants":218,"nmap":34,"three":197}]},{},[220]);
+},{"../constants":219,"nmap":34,"three":197}]},{},[221]);
