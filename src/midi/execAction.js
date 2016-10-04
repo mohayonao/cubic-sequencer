@@ -1,19 +1,18 @@
 "use strict";
 
-const actions = require("../actions");
 const { to3DIndex } = require("../utils/matrix");
 const { fromNoteNumber } = require("./utils");
 const STATE_NAMES = [
   "pitchShift", "loopLength", "noteLength"
 ];
 
-function createAction(track, scene, st, d1, d2) {
+function execAction(actions, track, scene, st, d1, d2, stateMode) {
   if (st === 0x90 && d2 !== 0) {
     const [ col, row ] = fromNoteNumber(d1);
 
     // matrix
     if (0 <= col && col <= 7) {
-      if (this._stateMode) {
+      if (stateMode) {
         if (0 <= row && row <= 2) {
           return actions.updateState(track, STATE_NAMES[row], col);
         }
@@ -47,4 +46,4 @@ function createAction(track, scene, st, d1, d2) {
   }
 }
 
-module.exports = createAction;
+module.exports = execAction;

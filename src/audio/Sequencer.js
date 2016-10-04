@@ -1,6 +1,5 @@
 "use strict";
 
-const events = require("events");
 const nmap = require("nmap");
 const WebAudioScheduler = require("web-audio-scheduler");
 const WorkerTimer = require("worker-timer");
@@ -11,12 +10,11 @@ const startWebAudioAPI = require("./utils/startWebAudioAPI");
 const { computeDurationFromBPM } = require("./utils");
 const { BPM_MAP } = require("../constants");
 
-class Sequencer extends events.EventEmitter {
-  constructor(audioContext) {
-    super();
-
+class Sequencer {
+  constructor(audioContext, actions) {
     this.bpm = 140;
     this.audioContext = audioContext;
+    this.actions = actions;
 
     this.convolver = this.audioContext.createConvolver();
     this.convolver.buffer = createReverbBuffer(this.audioContext);
@@ -26,8 +24,8 @@ class Sequencer extends events.EventEmitter {
     this.tracks = nmap(3, (_, i) => new Track(this.convolver, sounds[i]));
 
     this.tracks.forEach((track, i) => {
-      track.on("tick", (data) => {
-        this.emit("tick", { ...data, track: i });
+      track.on("tick", ({ playbackTime, index }) => {
+        this.actions.tickSequencer(playbackTime, i, index);
       });
     });
 

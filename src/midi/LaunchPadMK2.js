@@ -1,10 +1,9 @@
 "use strict";
 
 const nmap = require("nmap");
-const events = require("events");
 const WebMIDIEmitter = require("web-midi-emitter");
 const { toNoteNumber } = require("./utils");
-const createAction = require("./createAction");
+const execAction = require("./execAction");
 const { N } = require("../constants");
 
 const LED_COLORS = [
@@ -16,9 +15,9 @@ const STATE_NAMES = [
   "pitchShift", "loopLength", "noteLength"
 ];
 
-class LaunchPadMK2 extends events.EventEmitter {
-  constructor() {
-    super();
+class LaunchPadMK2 {
+  constructor(actions) {
+    this.actions = actions;
     this._device = null;
     this._state = null;
     this._trackState = null;
@@ -51,11 +50,7 @@ class LaunchPadMK2 extends events.EventEmitter {
   }
 
   recv(st, d1, d2) {
-    const action = this.createAction(st, d1, d2);
-
-    if (action) {
-      this.emit("dispatch", action);
-    } else {
+    if (!this.execAction(st, d1, d2)) {
       if (st === 0xb0 && d1 === 0x6c) {
         this._stateMode = d2 ? 1 : 0;
         this.render();
@@ -131,8 +126,8 @@ class LaunchPadMK2 extends events.EventEmitter {
     }
   }
 
-  createAction(st, d1, d2) {
-    return createAction(this._state.master.track, this._trackState.scene, st, d1, d2);
+  execAction(st, d1, d2) {
+    return execAction(this.actions, this._state.master.track, this._trackState.scene, st, d1, d2, this._stateMode);
   }
 }
 

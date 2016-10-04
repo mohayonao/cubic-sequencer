@@ -2,7 +2,7 @@
 
 const React = require("react");
 const ReactDom = require("react-dom");
-const redux = require("redux");
+const { createStore, applyMiddleware, bindActionCreators } = require("redux");
 const { Provider } = require("react-redux");
 const requestMIDIAccess = require("request-midi-access");
 const audioTimeline = require("./middlewares/audio-timeline");
@@ -11,17 +11,18 @@ const Viewer = require("./viewer/Viewer");
 const Sequencer = require("./audio/Sequencer");
 const LaunchPadMK2 = require("./midi/LaunchPadMK2");
 const reducers = require("./reducers");
-const actions = require("./actions");
+const actionCreators = require("./actions");
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 window.addEventListener("DOMContentLoaded", () => {
   const audioContext = new AudioContext();
-  const sequencer = new Sequencer(audioContext);
   const timeline = audioTimeline(audioContext);
-  const viewer = new Viewer(document.getElementById("viewer"));
-  const midiDevice = new LaunchPadMK2();
-  const store = redux.createStore(reducers, redux.applyMiddleware(timeline));
+  const store = createStore(reducers, applyMiddleware(timeline));
+  const actions = bindActionCreators(actionCreators, store.dispatch);
+  const viewer = new Viewer(document.getElementById("viewer"), actions);
+  const sequencer = new Sequencer(audioContext, actions);
+  const midiDevice = new LaunchPadMK2(actions);
   const initState = store.getState();
 
   requestMIDIAccess().then((access) => {
@@ -38,12 +39,12 @@ window.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(animate);
   }
 
-  sequencer.on("tick", ({ playbackTime, track, index }) => {
-    store.dispatch(actions.tickSequencer(playbackTime, track, index));
-  });
-  midiDevice.on("dispatch", (e) => {
-    store.dispatch(e);
-  });
+  // sequencer.on("tick", ({ playbackTime, track, index }) => {
+  //   // store.dispatch(actions.tickSequencer(playbackTime, track, index));
+  // });
+  // midiDevice.on("dispatch", (e) => {
+  //   // store.dispatch(e);
+  // });
   store.subscribe(() => {
     const state = store.getState();
     sequencer.setState(state);
@@ -53,5 +54,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   requestAnimationFrame(animate);
 
-  ReactDom.render(<Provider store={ store }><App /></Provider>, document.getElementById("app"));
+  ReactDom.render(
+    <Provider store={ store }>
+      <App actions={ actions } />
+    </Provider>
+  , document.getElementById("app"));
 });

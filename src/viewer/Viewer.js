@@ -12,8 +12,9 @@ const ROTATIONS = [
 const VIEW_ANGLE = 30;
 
 class Viewer {
-  constructor(elem) {
+  constructor(elem, actions) {
     this.elem = elem;
+    this.actions = actions;
     this.scene = new THREE.Scene();
 
     this.group = new THREE.Object3D();
