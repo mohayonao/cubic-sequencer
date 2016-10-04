@@ -1,11 +1,9 @@
 "use strict";
 
 const React = require("react");
-const { bindActionCreators } = require("redux");
 const { connect } = require("react-redux");
 const MasterCtrl = require("../components/MasterCtrl");
 const TrackCtrl = require("../components/TrackCtrl");
-const actions = require("../actions");
 
 class App extends React.Component {
   static propTypes = {
@@ -26,14 +24,4 @@ class App extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
-  return state;
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    actions: bindActionCreators(actions, dispatch)
-  };
-}
-
-module.exports = connect(mapStateToProps, mapDispatchToProps)(App);
+module.exports = connect(state => state)(App);

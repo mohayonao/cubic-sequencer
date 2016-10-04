@@ -65617,17 +65617,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var React = require("react");
 
-var _require = require("redux");
+var _require = require("react-redux");
 
-var bindActionCreators = _require.bindActionCreators;
-
-var _require2 = require("react-redux");
-
-var connect = _require2.connect;
+var connect = _require.connect;
 
 var MasterCtrl = require("../components/MasterCtrl");
 var TrackCtrl = require("../components/TrackCtrl");
-var actions = require("../actions");
 
 var App = function (_React$Component) {
   _inherits(App, _React$Component);
@@ -65667,19 +65662,11 @@ App.propTypes = {
 };
 
 
-function mapStateToProps(state) {
+module.exports = connect(function (state) {
   return state;
-}
+})(App);
 
-function mapDispatchToProps(dispatch) {
-  return {
-    actions: bindActionCreators(actions, dispatch)
-  };
-}
-
-module.exports = connect(mapStateToProps, mapDispatchToProps)(App);
-
-},{"../actions":207,"../components/MasterCtrl":218,"../components/TrackCtrl":220,"react":187,"react-redux":40,"redux":193}],224:[function(require,module,exports){
+},{"../components/MasterCtrl":218,"../components/TrackCtrl":220,"react":187,"react-redux":40}],224:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
