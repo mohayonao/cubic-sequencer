@@ -7,9 +7,9 @@ const execAction = require("./execAction");
 const { N } = require("../constants");
 
 const LED_COLORS = [
-  [ 0, 59,  7, 52 ], // R
-  [ 0, 35, 23, 16 ], // G
-  [ 0, 51, 47, 37 ], // B
+  [ 0,  71,   7,   4,   5 ], // R
+  [ 0,  71,  31,  28,  29 ], // G
+  [ 0,  71,  47,  44,  45 ], // B
 ];
 const STATE_NAMES = [
   "pitchShift", "loopLength", "noteLength"
@@ -70,14 +70,14 @@ class LaunchPadMK2 {
 
   renderMasterLED() {
     const states = [
-      this._state.master.play ? 62 : 0,
+      this._state.master.play ? 12 : 0,
       0,
       0,
       0,
-      this._stateMode ? 62 : 0,
-      this._state.master.track === 0 ? LED_COLORS[0][2 + this._stateMode] : 0,
-      this._state.master.track === 1 ? LED_COLORS[1][2 + this._stateMode] : 0,
-      this._state.master.track === 2 ? LED_COLORS[2][2 + this._stateMode] : 0,
+      this._stateMode ? 12 : 0,
+      this._state.master.track === 0 ? LED_COLORS[0][4 - this._stateMode] : 0,
+      this._state.master.track === 1 ? LED_COLORS[1][4 - this._stateMode] : 0,
+      this._state.master.track === 2 ? LED_COLORS[2][4 - this._stateMode] : 0,
     ];
     for (let i = 0; i < N; i++) {
       const ledColor = states[i];
@@ -106,7 +106,7 @@ class LaunchPadMK2 {
     const states = STATE_NAMES.map(name => this._trackState[name]);
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
-        const ledColor = ledColors[states[i] === j ? 2 : 0];
+        const ledColor = ledColors[states[i] === j ? 4 : 0];
         if (this._matrixLED[i][j] !== ledColor) {
           this._device.send([ 0x90, toNoteNumber(i, j), ledColor ]);
           this._matrixLED[i][j] = ledColor;

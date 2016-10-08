@@ -65808,9 +65808,9 @@ var _require2 = require("../constants");
 var N = _require2.N;
 
 
-var LED_COLORS = [[0, 59, 7, 52], // R
-[0, 35, 23, 16], // G
-[0, 51, 47, 37]];
+var LED_COLORS = [[0, 71, 7, 4, 5], // R
+[0, 71, 31, 28, 29], // G
+[0, 71, 47, 44, 45]];
 var STATE_NAMES = ["pitchShift", "loopLength", "noteLength"];
 
 var LaunchPadMK2 = function () {
@@ -65887,7 +65887,7 @@ var LaunchPadMK2 = function () {
   }, {
     key: "renderMasterLED",
     value: function renderMasterLED() {
-      var states = [this._state.master.play ? 62 : 0, 0, 0, 0, this._stateMode ? 62 : 0, this._state.master.track === 0 ? LED_COLORS[0][2 + this._stateMode] : 0, this._state.master.track === 1 ? LED_COLORS[1][2 + this._stateMode] : 0, this._state.master.track === 2 ? LED_COLORS[2][2 + this._stateMode] : 0];
+      var states = [this._state.master.play ? 12 : 0, 0, 0, 0, this._stateMode ? 12 : 0, this._state.master.track === 0 ? LED_COLORS[0][4 - this._stateMode] : 0, this._state.master.track === 1 ? LED_COLORS[1][4 - this._stateMode] : 0, this._state.master.track === 2 ? LED_COLORS[2][4 - this._stateMode] : 0];
       for (var i = 0; i < N; i++) {
         var ledColor = states[i];
         if (this._masterLED[i] !== ledColor) {
@@ -65921,7 +65921,7 @@ var LaunchPadMK2 = function () {
       });
       for (var i = 0; i < N; i++) {
         for (var j = 0; j < N; j++) {
-          var ledColor = ledColors[states[i] === j ? 2 : 0];
+          var ledColor = ledColors[states[i] === j ? 4 : 0];
           if (this._matrixLED[i][j] !== ledColor) {
             this._device.send([0x90, toNoteNumber(i, j), ledColor]);
             this._matrixLED[i][j] = ledColor;
