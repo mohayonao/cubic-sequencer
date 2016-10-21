@@ -1,6 +1,7 @@
 .DS_STORE
 .nyc_output
 npm-debug.log
+yarn-error.log
 node_modules/
 coverage/
 lib/
