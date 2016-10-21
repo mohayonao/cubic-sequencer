@@ -1,9 +1,8 @@
 import React from "react";
 import ReactDom from "react-dom";
-import { createStore, applyMiddleware, bindActionCreators } from "redux";
+import { createStore, bindActionCreators } from "redux";
 import { Provider } from "react-redux";
 import requestMIDIAccess from "request-midi-access";
-import audioTimeline from "./middlewares/audio-timeline";
 import App from "./containers/App";
 import Viewer from "./viewer/Viewer";
 import Sequencer from "./audio/Sequencer";
@@ -15,8 +14,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 window.addEventListener("DOMContentLoaded", () => {
   const audioContext = new AudioContext();
-  const timeline = audioTimeline(audioContext);
-  const store = createStore(reducers, applyMiddleware(timeline));
+  const store = createStore(reducers);
   const actions = bindActionCreators(actionCreators, store.dispatch);
   const viewer = new Viewer(document.getElementById("viewer"), actions);
   const sequencer = new Sequencer(audioContext, actions);
@@ -32,17 +30,10 @@ window.addEventListener("DOMContentLoaded", () => {
   viewer.setState(initState);
 
   function animate() {
-    timeline.process();
     viewer.render();
     requestAnimationFrame(animate);
   }
 
-  // sequencer.on("tick", ({ playbackTime, track, index }) => {
-  //   // store.dispatch(actions.tickSequencer(playbackTime, track, index));
-  // });
-  // midiDevice.on("dispatch", (e) => {
-  //   // store.dispatch(e);
-  // });
   store.subscribe(() => {
     const state = store.getState();
     sequencer.setState(state);
