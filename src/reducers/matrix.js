@@ -1,10 +1,8 @@
-"use strict";
-
-const nmap = require("nmap");
-const types = require("../constants/ActionTypes");
-const { coin } = require("../utils/random");
-const { pluck } = require("../utils/matrix");
-const { N } = require("../constants");
+import nmap from "nmap";
+import * as types from "../constants/ActionTypes";
+import { coin } from "../utils/random";
+import { pluck } from "../utils/matrix";
+import { N } from "../constants";
 
 const rand = () => coin(0.1);
 const createMatrix = (fn) => {
@@ -14,7 +12,7 @@ const createMatrix = (fn) => {
 };
 const createAxis = (data) => [ 0, 1, 2 ].map(i => pluck(data, i));
 
-module.exports = (state = createMatrix(rand), action) => {
+export default function(state = createMatrix(rand), action) {
   if (action.type === types.TOGGLE_MATRIX) {
     const data = JSON.parse(JSON.stringify(state.data));
     data[action.i][action.j][action.k] = 1 - data[action.i][action.j][action.k];
@@ -27,4 +25,4 @@ module.exports = (state = createMatrix(rand), action) => {
     return createMatrix(() => 0);
   }
   return state;
-};
+}

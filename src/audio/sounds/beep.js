@@ -1,8 +1,6 @@
-"use strict";
+import { computeFrequenceyFromNoteNumber } from "../utils";
 
-const { computeFrequenceyFromNoteNumber } = require("../utils");
-
-function beep(destination, playbackTime, noteNumber, duration) {
+export default function beep(destination, playbackTime, noteNumber, duration) {
   const t0 = playbackTime;
   const t1 = t0 + duration * 0.25;
   const freq = computeFrequenceyFromNoteNumber(noteNumber);
@@ -22,5 +20,3 @@ function beep(destination, playbackTime, noteNumber, duration) {
   gain.gain.value = 0.3;
   gain.connect(destination);
 }
-
-module.exports = beep;

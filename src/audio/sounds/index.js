@@ -1,7 +1,5 @@
-"use strict";
+import epiano from "./epiano";
+import pad from "./pad";
+import beep from "./beep";
 
-module.exports = [
-  require("./epiano"),
-  require("./pad"),
-  require("./beep"),
-];
+export default [ epiano, pad, beep ];

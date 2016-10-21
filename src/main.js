@@ -1,17 +1,15 @@
-"use strict";
-
-const React = require("react");
-const ReactDom = require("react-dom");
-const { createStore, applyMiddleware, bindActionCreators } = require("redux");
-const { Provider } = require("react-redux");
-const requestMIDIAccess = require("request-midi-access");
-const audioTimeline = require("./middlewares/audio-timeline");
-const App = require("./containers/App");
-const Viewer = require("./viewer/Viewer");
-const Sequencer = require("./audio/Sequencer");
-const LaunchPadMK2 = require("./midi/LaunchPadMK2");
-const reducers = require("./reducers");
-const actionCreators = require("./actions");
+import React from "react";
+import ReactDom from "react-dom";
+import { createStore, applyMiddleware, bindActionCreators } from "redux";
+import { Provider } from "react-redux";
+import requestMIDIAccess from "request-midi-access";
+import audioTimeline from "./middlewares/audio-timeline";
+import App from "./containers/App";
+import Viewer from "./viewer/Viewer";
+import Sequencer from "./audio/Sequencer";
+import LaunchPadMK2 from "./midi/LaunchPadMK2";
+import reducers from "./reducers";
+import * as actionCreators from "./actions";
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 

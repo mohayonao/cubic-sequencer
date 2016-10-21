@@ -1,12 +1,10 @@
-"use strict";
+import * as types from "../constants/ActionTypes";
 
-const types = require("../constants/ActionTypes");
-
-module.exports = (state = [ -1, -1, -1 ], action) => {
+export default function(state = [ -1, -1, -1 ], action) {
   if (action.type === types.TICK_SEQUENCER) {
     state = state.slice();
     state[action.track] = action.index;
     return state;
   }
   return state;
-};
+}

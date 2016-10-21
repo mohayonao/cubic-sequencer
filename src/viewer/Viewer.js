@@ -1,8 +1,6 @@
-"use strict";
-
-const THREE = require("three");
-const nmap = require("nmap");
-const { N, TRACK_COLORS } = require("../constants");
+import * as THREE from "three";
+import nmap from "nmap";
+import { N, TRACK_COLORS } from "../constants";
 
 const ROTATIONS = [
   new THREE.Vector3( Math.PI/2, -Math.PI/2, 0),
@@ -11,7 +9,7 @@ const ROTATIONS = [
 ];
 const VIEW_ANGLE = 30;
 
-class Viewer {
+export default class Viewer {
   constructor(elem, actions) {
     this.elem = elem;
     this.actions = actions;
@@ -141,5 +139,3 @@ class Viewer {
 function closeTo(a, b) {
   return (Math.abs(a.x - b.x) < 1e-6) && (Math.abs(a.z - b.z) < 1e-6) && (Math.abs(a.z - b.z) < 1e-6);
 }
-
-module.exports = Viewer;

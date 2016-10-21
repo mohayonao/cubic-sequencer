@@ -1,8 +1,6 @@
-"use strict";
-
 const ACTION_TYPE_EMIT = "@@audio-timeline/EMIT";
 
-function audioTimeline(audioContext) {
+export default function audioTimeline(audioContext) {
   let _scheds = [];
   let _store = null;
 
@@ -38,5 +36,3 @@ function audioTimeline(audioContext) {
 
   return middleware;
 }
-
-module.exports = audioTimeline;

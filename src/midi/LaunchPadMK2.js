@@ -1,10 +1,8 @@
-"use strict";
-
-const nmap = require("nmap");
-const WebMIDIEmitter = require("web-midi-emitter");
-const { toNoteNumber } = require("./utils");
-const execAction = require("./execAction");
-const { N } = require("../constants");
+import nmap from "nmap";
+import WebMIDIEmitter from "web-midi-emitter";
+import { toNoteNumber } from "./utils";
+import execAction from "./execAction";
+import { N } from "../constants";
 
 const LED_COLORS = [
   [ 0,  71,   7,   4,   5 ], // R
@@ -15,7 +13,7 @@ const STATE_NAMES = [
   "pitchShift", "loopLength", "noteLength"
 ];
 
-class LaunchPadMK2 {
+export default class LaunchPadMK2 {
   constructor(actions) {
     this.actions = actions;
     this._device = null;
@@ -130,5 +128,3 @@ class LaunchPadMK2 {
     return execAction(this.actions, this._state.master.track, this._trackState.scene, st, d1, d2, this._stateMode);
   }
 }
-
-module.exports = LaunchPadMK2;

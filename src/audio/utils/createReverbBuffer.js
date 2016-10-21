@@ -1,17 +1,4 @@
-"use strict";
-
-function createReverb(len) {
-  const data = new Float32Array(len);
-
-  for (let i = 0; i < len; i++) {
-    data[i] = Math.random() * 2 - 1;
-    data[i] *= Math.pow(2, -i / 80);
-  }
-
-  return data;
-}
-
-function createReverbBuffer(audioContext) {
+export default function createReverbBuffer(audioContext) {
   const data = [ createReverb(16384) ];
   const buffer = audioContext.createBuffer(data.length, data[0].length, audioContext.sampleRate);
 
@@ -22,4 +9,13 @@ function createReverbBuffer(audioContext) {
   return buffer;
 }
 
-module.exports = createReverbBuffer;
+export function createReverb(len) {
+  const data = new Float32Array(len);
+
+  for (let i = 0; i < len; i++) {
+    data[i] = Math.random() * 2 - 1;
+    data[i] *= Math.pow(2, -i / 80);
+  }
+
+  return data;
+}

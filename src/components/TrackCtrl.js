@@ -1,17 +1,15 @@
-"use strict";
+import nmap from "nmap";
+import React, { Component, PropTypes } from "react";
+import LabeledMatrixCtrl from "./LabeledMatrixCtrl";
+import { to3DIndex } from "../utils/matrix";
+import { N, EMPTY_COLOR, TRACK_COLORS } from "../constants";
 
-const nmap = require("nmap");
-const React = require("react");
-const LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
-const { to3DIndex } = require("../utils/matrix");
-const { N, EMPTY_COLOR, TRACK_COLORS } = require("../constants");
-
-class TrackCtrl extends React.Component {
+export default class TrackCtrl extends Component {
   static propTypes = {
-    actions: React.PropTypes.object.isRequired,
-    matrix : React.PropTypes.object.isRequired,
-    track  : React.PropTypes.number.isRequired,
-    state  : React.PropTypes.object.isRequired,
+    actions: PropTypes.object.isRequired,
+    matrix : PropTypes.object.isRequired,
+    track  : PropTypes.number.isRequired,
+    state  : PropTypes.object.isRequired,
   };
 
   render() {
@@ -45,5 +43,3 @@ class TrackCtrl extends React.Component {
     );
   }
 }
-
-module.exports = TrackCtrl;

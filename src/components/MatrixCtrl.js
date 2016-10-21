@@ -1,12 +1,10 @@
-"use strict";
+import React, { Component, PropTypes } from "react";
 
-const React = require("react");
-
-class MatrixCtrl extends React.Component {
+export default class MatrixCtrl extends Component {
   static propTypes = {
-    data: React.PropTypes.array.isRequired,
-    color: React.PropTypes.string,
-    onCellClick: React.PropTypes.func,
+    data: PropTypes.array.isRequired,
+    color: PropTypes.string,
+    onCellClick: PropTypes.func,
   };
 
   render() {
@@ -20,12 +18,12 @@ class MatrixCtrl extends React.Component {
   }
 }
 
-class MatrixCtrlRow extends React.Component {
+class MatrixCtrlRow extends Component {
   static propTypes = {
-    data: React.PropTypes.array.isRequired,
-    row: React.PropTypes.number.isRequired,
-    color: React.PropTypes.string,
-    onCellClick: React.PropTypes.func,
+    data: PropTypes.array.isRequired,
+    row: PropTypes.number.isRequired,
+    color: PropTypes.string,
+    onCellClick: PropTypes.func,
   };
 
   render() {
@@ -40,13 +38,13 @@ class MatrixCtrlRow extends React.Component {
   }
 }
 
-class MatrixCtrlCell extends React.Component {
+class MatrixCtrlCell extends Component {
   static propTypes = {
-    data: React.PropTypes.number.isRequired,
-    row: React.PropTypes.number.isRequired,
-    col: React.PropTypes.number.isRequired,
-    color: React.PropTypes.string,
-    onClick: React.PropTypes.func,
+    data: PropTypes.number.isRequired,
+    row: PropTypes.number.isRequired,
+    col: PropTypes.number.isRequired,
+    color: PropTypes.string,
+    onClick: PropTypes.func,
   };
 
   onClick() {
@@ -70,5 +68,3 @@ class MatrixCtrlCell extends React.Component {
     );
   }
 }
-
-module.exports = MatrixCtrl;

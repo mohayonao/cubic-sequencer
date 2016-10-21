@@ -1,8 +1,6 @@
-"use strict";
+import { computeFrequenceyFromNoteNumber } from "../utils";
 
-const { computeFrequenceyFromNoteNumber } = require("../utils");
-
-function pad(destination, playbackTime, noteNumber, duration) {
+export default function pad(destination, playbackTime, noteNumber, duration) {
   const t0 = playbackTime;
   const t1 = t0 + duration * 0.2;
   const t2 = t1 + duration * 0.8;
@@ -39,5 +37,3 @@ function pad(destination, playbackTime, noteNumber, duration) {
   gain.gain.linearRampToValueAtTime(0, t3);
   gain.connect(destination);
 }
-
-module.exports = pad;

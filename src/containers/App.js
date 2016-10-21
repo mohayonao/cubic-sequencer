@@ -1,16 +1,14 @@
-"use strict";
+import React, { Component, PropTypes } from "react";
+import { connect } from "react-redux";
+import MasterCtrl from "../components/MasterCtrl";
+import TrackCtrl from "../components/TrackCtrl";
 
-const React = require("react");
-const { connect } = require("react-redux");
-const MasterCtrl = require("../components/MasterCtrl");
-const TrackCtrl = require("../components/TrackCtrl");
-
-class App extends React.Component {
+class App extends Component {
   static propTypes = {
-    actions: React.PropTypes.object.isRequired,
-    master : React.PropTypes.object.isRequired,
-    matrix : React.PropTypes.object.isRequired,
-    track  : React.PropTypes.array.isRequired,
+    actions: PropTypes.object.isRequired,
+    master : PropTypes.object.isRequired,
+    matrix : PropTypes.object.isRequired,
+    track  : PropTypes.array.isRequired,
   };
 
   render() {
@@ -24,4 +22,4 @@ class App extends React.Component {
   }
 }
 
-module.exports = connect(state => state)(App);
+export default connect(state => state)(App);

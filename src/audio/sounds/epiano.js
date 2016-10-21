@@ -1,8 +1,6 @@
-"use strict";
+import { computeFrequenceyFromNoteNumber } from "../utils";
 
-const { computeFrequenceyFromNoteNumber } = require("../utils");
-
-function epiano(destination, playbackTime, noteNumber, duration) {
+export default function epiano(destination, playbackTime, noteNumber, duration) {
   const t0 = playbackTime;
   const t1 = t0 + duration * 0.2;
   const t2 = t1 + duration * 1.0;
@@ -50,5 +48,3 @@ function epiano(destination, playbackTime, noteNumber, duration) {
   gain2.connect(oscillator1.frequency);
   gain2.connect(oscillator2.frequency);
 }
-
-module.exports = epiano;

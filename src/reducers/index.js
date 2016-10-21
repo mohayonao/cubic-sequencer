@@ -1,13 +1,11 @@
-"use strict";
+import { combineReducers } from "redux";
+import * as master from "./master";
+import matrix from "./matrix";
+import ticks from "./ticks";
+import track from "./track";
 
-const redux = require("redux");
-const master = require("./master");
-const matrix = require("./matrix");
-const ticks = require("./ticks");
-const track = require("./track");
-
-module.exports = redux.combineReducers({
-  master: redux.combineReducers(master),
+export default combineReducers({
+  master: combineReducers(master),
   matrix,
   ticks,
   track,

@@ -1,15 +1,13 @@
-"use strict";
-
-const events = require("events");
-const nmap = require("nmap");
-const { computeDurationFromBPM } = require("./utils");
-const { N } = require("../constants");
+import events from "events";
+import nmap from "nmap";
+import { computeDurationFromBPM } from "./utils";
+import { N } from "../constants";
 
 const NOTE_NUMBERS = [ 52, 57, 60, 62, 64, 65, 69, 72, 76, 79, 81, 83, 84, 86, 88  ];
 const NOTE_LENGTHS   = [ 1, 2, 3, 4, 5, 6, 7, 8 ];
 const NOTE_INTERVALS = [ 32, 16, 12, 8, 7, 6, 5, 4 ];
 
-class Track extends events.EventEmitter {
+export default class Track extends events.EventEmitter {
   constructor(destination, instrument) {
     super();
 
@@ -63,5 +61,3 @@ class Track extends events.EventEmitter {
     this.emit("tick", { playbackTime, index });
   }
 }
-
-module.exports = Track;

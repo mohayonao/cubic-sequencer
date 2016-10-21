@@ -1,12 +1,11 @@
-"use strict";
+import { to3DIndex } from "../utils/matrix";
+import { fromNoteNumber } from "./utils";
 
-const { to3DIndex } = require("../utils/matrix");
-const { fromNoteNumber } = require("./utils");
 const STATE_NAMES = [
   "pitchShift", "loopLength", "noteLength"
 ];
 
-function execAction(actions, track, scene, st, d1, d2, stateMode) {
+export default function execAction(actions, track, scene, st, d1, d2, stateMode) {
   if (st === 0x90 && d2 !== 0) {
     const [ col, row ] = fromNoteNumber(d1);
 
@@ -45,5 +44,3 @@ function execAction(actions, track, scene, st, d1, d2, stateMode) {
     }
   }
 }
-
-module.exports = execAction;

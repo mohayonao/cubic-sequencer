@@ -1,16 +1,15 @@
-"use strict";
+export function coin(x) {
+  return Math.random() < x ? 1 : 0;
+}
 
-module.exports = {
-  coin(x) {
-    return Math.random() < x ? 1 : 0;
-  },
-  irand(x) {
-    return Math.floor(Math.random() * x);
-  },
-  rand2(x) {
-    return (Math.random() * 2 - 1) * x;
-  },
-  sample(list) {
-    return list[Math.floor(Math.random() * list.length)];
-  },
-};
+export function irand(x) {
+  return Math.floor(Math.random() * x);
+}
+
+export function rand2(x) {
+  return (Math.random() * 2 - 1) * x;
+}
+
+export function sample(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}

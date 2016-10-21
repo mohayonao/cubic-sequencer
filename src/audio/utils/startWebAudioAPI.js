@@ -1,6 +1,4 @@
-"use strict";
-
-function startWebAudioAPI(audioContext) {
+export default function startWebAudioAPI(audioContext) {
   if (audioContext.currentTime === 0) {
     const bufferSource = audioContext.createBufferSource();
 
@@ -13,5 +11,3 @@ function startWebAudioAPI(audioContext) {
     };
   }
 }
-
-module.exports = startWebAudioAPI;

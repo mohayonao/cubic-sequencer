@@ -1,13 +1,11 @@
-"use strict";
+import React, { Component, PropTypes } from "react";
+import LabeledMatrixCtrl from "./LabeledMatrixCtrl";
+import { BPM_MAP, EMPTY_COLOR, MASTER_COLOR, TRACK_COLORS } from "../constants";
 
-const React = require("react");
-const LabeledMatrixCtrl = require("./LabeledMatrixCtrl");
-const { BPM_MAP, EMPTY_COLOR, MASTER_COLOR, TRACK_COLORS } = require("../constants");
-
-class MasterCtrl extends React.Component {
+export default class MasterCtrl extends Component {
   static propTypes = {
-    actions: React.PropTypes.object.isRequired,
-    master : React.PropTypes.object.isRequired,
+    actions: PropTypes.object.isRequired,
+    master : PropTypes.object.isRequired,
   };
 
   render() {
@@ -39,5 +37,3 @@ class MasterCtrl extends React.Component {
     );
   }
 }
-
-module.exports = MasterCtrl;

@@ -1,16 +1,14 @@
-"use strict";
+import nmap from "nmap";
+import WebAudioScheduler from "web-audio-scheduler";
+import WorkerTimer from "worker-timer";
+import Track from "./Track";
+import sounds from "./sounds";
+import createReverbBuffer from "./utils/createReverbBuffer";
+import startWebAudioAPI from "./utils/startWebAudioAPI";
+import { computeDurationFromBPM } from "./utils";
+import { BPM_MAP } from "../constants";
 
-const nmap = require("nmap");
-const WebAudioScheduler = require("web-audio-scheduler");
-const WorkerTimer = require("worker-timer");
-const Track = require("./Track");
-const sounds = require("./sounds");
-const createReverbBuffer = require("./utils/createReverbBuffer");
-const startWebAudioAPI = require("./utils/startWebAudioAPI");
-const { computeDurationFromBPM } = require("./utils");
-const { BPM_MAP } = require("../constants");
-
-class Sequencer {
+export default class Sequencer {
   constructor(audioContext, actions) {
     this.bpm = 140;
     this.audioContext = audioContext;
@@ -66,5 +64,3 @@ class Sequencer {
     this.sched.insert(t1, this.sequence);
   }
 }
-
-module.exports = Sequencer;

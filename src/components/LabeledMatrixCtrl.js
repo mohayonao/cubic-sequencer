@@ -1,14 +1,12 @@
-"use strict";
+import React, { Component, PropTypes } from "react";
+import MatrixCtrl from "./MatrixCtrl";
 
-const React = require("react");
-const MatrixCtrl = require("./MatrixCtrl");
-
-class LabeledMatrixCtrl extends React.Component {
+export default class LabeledMatrixCtrl extends Component {
   static propTypes = {
-    label : React.PropTypes.string.isRequired,
-    data  : React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)).isRequired,
-    color : React.PropTypes.string,
-    action: React.PropTypes.func,
+    label : PropTypes.string.isRequired,
+    data  : PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)).isRequired,
+    color : PropTypes.string,
+    action: PropTypes.func,
   };
 
   render() {
@@ -21,5 +19,3 @@ class LabeledMatrixCtrl extends React.Component {
     );
   }
 }
-
-module.exports = LabeledMatrixCtrl;
