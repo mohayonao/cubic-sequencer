@@ -3,17 +3,28 @@ import MatrixCtrlCol from "./MatrixCtrlCol";
 
 export default class MatrixCtrlRow extends Component {
   static propTypes = {
-    data       : PropTypes.array.isRequired,
-    row        : PropTypes.number.isRequired,
-    color      : PropTypes.string,
-    onCellClick: PropTypes.func,
+    data   : PropTypes.arrayOf(PropTypes.number).isRequired,
+    colors : PropTypes.string,
+    onClick: PropTypes.func,
   };
 
+  shouldComponentUpdate(nextProps) {
+    return this.props.data !== nextProps.data || this.props.colors !== nextProps.colors;
+  }
+
+  onClick(col, data) {
+    if (this.props.onClick) {
+      this.props.onClick(col, data);
+    }
+  }
+
   render() {
-    const { data, row, color, onCellClick } = this.props;
-    const elems = data.map((data, i) => {
+    const { data, colors } = this.props;
+    const elems = data.map((colData, col) => {
       return (
-        <MatrixCtrlCol key={ i } row={ row } col={ i } color={ color } data={ data } onClick={ onCellClick }/>
+        <MatrixCtrlCol key={ col } colors={ colors } data={ colData } onClick={(...args) => {
+          this.onClick(col, ...args);
+        }}/>
       );
     });
 

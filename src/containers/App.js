@@ -1,25 +1,30 @@
 import React, { Component, PropTypes } from "react";
-import { connect } from "react-redux";
-import MasterCtrl from "../components/MasterCtrl";
-import TrackCtrl from "../components/TrackCtrl";
+import MasterCtrl from "./MasterCtrl";
+import BPMCtrl from "./BPMCtrl";
+import AxisCtrl from "./AxisCtrl";
+import PitchShiftCtrl from "./PitchShiftCtrl";
+import LoopLengthCtrl from "./LoopLengthCtrl";
+import NoteLengthCtrl from "./NoteLengthCtrl";
+import SceneCtrl from "./SceneCtrl";
+import TrackCtrl from "./TrackCtrl";
 
-class App extends Component {
+export default class App extends Component {
   static propTypes = {
     actions: PropTypes.object.isRequired,
-    master : PropTypes.object.isRequired,
-    matrix : PropTypes.object.isRequired,
-    track  : PropTypes.array.isRequired,
   };
 
   render() {
-    const { actions, master, matrix, track } = this.props;
     return (
       <div>
-        <MasterCtrl actions={ actions } master={ master } />
-        <TrackCtrl actions={ actions } track={ master.track } state={ track[master.track] } matrix={ matrix } />
+        <MasterCtrl actions={ this.props.actions }/>
+        <BPMCtrl actions={ this.props.actions }/>
+        <AxisCtrl actions={ this.props.actions }/>
+        <PitchShiftCtrl actions={ this.props.actions }/>
+        <LoopLengthCtrl actions={ this.props.actions }/>
+        <NoteLengthCtrl actions={ this.props.actions }/>
+        <SceneCtrl actions={ this.props.actions }/>
+        <TrackCtrl actions={ this.props.actions }/>
       </div>
     );
   }
 }
-
-export default connect(state => state)(App);

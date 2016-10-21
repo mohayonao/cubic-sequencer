@@ -3,30 +3,28 @@ import React, { Component, PropTypes } from "react";
 export default class MatrixCtrlCol extends Component {
   static propTypes = {
     data   : PropTypes.number.isRequired,
-    row    : PropTypes.number.isRequired,
-    col    : PropTypes.number.isRequired,
-    color  : PropTypes.string,
+    colors : PropTypes.string,
     onClick: PropTypes.func,
   };
 
-  onClick() {
+  shouldComponentUpdate(nextProps) {
+    return this.props.data !== nextProps.data || this.props.colors !== nextProps.colors;
+  }
+
+  onClick(data) {
     if (this.props.onClick) {
-      this.props.onClick({
-        row: this.props.row,
-        col: this.props.col,
-        data: this.props.data,
-      });
+      this.props.onClick(data);
     }
   }
 
   render() {
-    const colors = (this.props.color || "").split(";");
-    const style = {
-      backgroundColor: colors[ Math.floor(this.props.data) ] || "transparent",
-    };
+    const { data, colors } = this.props;
+    const backgroundColor = (colors || "").split(";")[data|0] || "transparent";
 
     return (
-      <span className="matrix-ctrl-col" style={ style } onClick={ this.onClick.bind(this) }></span>
+      <span className="matrix-ctrl-col" style={{ backgroundColor }} onClick={() => {
+        this.onClick(data);
+      }}></span>
     );
   }
 }
